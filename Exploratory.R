@@ -551,6 +551,8 @@ summary(train_dicom_hdr)
 str(train_dicom_hdr)
 
 ################################################################################
+## HDR analysis
+
 load("./data/train_dicom_names.RData")
 load("./data/train_dicom_values.RData")
 load("./data/test_dicom_names.RData")
@@ -793,7 +795,10 @@ change.to.factor <- function(x) {
 # codetools::findGlobals(change.to.factor)
 
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 2502bb2b6744c8dcafde877988e07c7744863c1b
 total_hdr$TemporalPositionIndex[total_hdr$TemporalPositionIndex==''] <- NA
 total_hdr$TemporalPositionIndex <- as.factor(total_hdr$TemporalPositionIndex)
 table(total_hdr$TemporalPositionIndex, useNA = 'ifany')
@@ -833,7 +838,10 @@ table(total_hdr$WindowWidth, useNA = 'ifany')
 # total_hdr$WindowWidth <- change.to.factor(total_hdr$WindowWidth)
 
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 2502bb2b6744c8dcafde877988e07c7744863c1b
 # Change to numeric
 total_hdr$LargestImagePixelValue <- as.numeric(total_hdr$LargestImagePixelValue)
 table(total_hdr$LargestImagePixelValue, useNA = 'ifany')
@@ -869,10 +877,13 @@ table(total_hdr$PixelRepresentation, useNA = 'ifany')
 # 639 956 
 
 
+<<<<<<< HEAD
+=======
 
 
 
 
+>>>>>>> 2502bb2b6744c8dcafde877988e07c7744863c1b
 # To eliminate (not information)
 table(total_hdr$PixelData, useNA = 'ifany')
 # PixelData 
@@ -1038,6 +1049,12 @@ describe_total
 # save(total_hdr, file = './data/total_hdr.RData')
 load("./data/total_hdr.RData")
 
+<<<<<<< HEAD
+library(readr)
+write_csv(total_hdr, './data/total_hdr.csv')
+
+=======
+>>>>>>> 2502bb2b6744c8dcafde877988e07c7744863c1b
 ################################################################################
 # One file "0015ceb851d7251b8f399e39779d1e7d"
 dicom_0001 <- readDICOM(train_ids[1])
