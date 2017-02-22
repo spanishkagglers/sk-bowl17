@@ -25,6 +25,8 @@ global arnavs_lugns_roi_dashboard
 arnavs_lugns_roi_dashboard={
     'INPUT_DIRECTORY' : COMPETITION_DATASET_DIRECTORY,
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/1_lungs_roi_arnav/',
+    'EROSION_BALL_RADIUS': 2,
+    'CLOSING_BALL_RADIUS': 10,
 }
 
 ####################### 2 - Watershed LUNGS ROI WAY
