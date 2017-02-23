@@ -170,7 +170,7 @@ def segment_lung_from_ct_scan(ct_scan):
 	return np.asarray([get_segmented_lungs(slice) for slice in ct_scan])
 
 
-def segment_all_ct_scans(path): # Iterate through all folders
+def segment_all_ct_scans(path, image): # Iterate through all folders
 	all_folders = os.listdir(path)
 	print('Found ' + str(len(all_folders)) + ' scans. Segmenting...')
 	i = 0
@@ -186,10 +186,11 @@ def segment_all_ct_scans(path): # Iterate through all folders
 		ct_scan = read_ct_scan(path + folder + '/') 
 		segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
 		
-		# Save image as .png with input image and binary mask superimposed
-		plot_ct_scan(segmented_ct_scan)
-		plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
-		plt.close()
+		# If true, save image as .png with input image and binary mask superimposed
+		if image:
+			plot_ct_scan(segmented_ct_scan)
+			plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
+			plt.close()
 		
 		# Save object as a .pickle
 		with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
@@ -201,7 +202,8 @@ def segment_all_ct_scans(path): # Iterate through all folders
 			str(time.strftime('%H:%M:%S', time.gmtime(time_finish))) + \
 			' left.')
 
-segment_all_ct_scans(INPUT_DIRECTORY)
+# Turn to False to not save a image with slices and binary mask superimposed
+segment_all_ct_scans(INPUT_DIRECTORY, True)
 
 print("Total elapsed time: " + \
 	  str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))
