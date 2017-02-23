@@ -107,7 +107,7 @@ def get_nodules(segmented_ct_scan):
 	return segmented_ct_scan
 
 		
-def get_nodules_all_segmented_ct_scans(path, image=False): # Iterate through all folders
+def get_nodules_all_segmented_ct_scans(path, image): # Iterate through all folders
 	
 	# Read all segmented lungs pickles, ignore other extension files (like images)
 	all_pickles = [p.split('.')[0] for p in os.listdir(path) if p.endswith('.pickle')]
@@ -128,10 +128,11 @@ def get_nodules_all_segmented_ct_scans(path, image=False): # Iterate through all
 		# Get nodules
 		segmented_nodules_ct_scan = get_nodules(segmented_ct_scan)
 		
-		# Save image as .png of 3D plotted segmented nodules
-		if image==True:
+		# If true, save image as .png of 3D plotted segmented nodules
+		if image:
 			plot_3d(segmented_nodules_ct_scan, 604)
 			plt.savefig(OUTPUT_DIRECTORY + segmented_lung + '.png', format='png')
+			plt.close()
 		
 		# Save object as a .pickle
 		with open(OUTPUT_DIRECTORY + segmented_lung + ".pickle", 'wb') as handle:
@@ -143,6 +144,8 @@ def get_nodules_all_segmented_ct_scans(path, image=False): # Iterate through all
 			str(time.strftime('%H:%M:%S', time.gmtime(time_finish))) + \
 			' left.')
 
-get_nodules_all_segmented_ct_scans(INPUT_DIRECTORY, True)
+# Turn to True to save a 3D segmented nodule image
+get_nodules_all_segmented_ct_scans(INPUT_DIRECTORY, False)
 
-print("Elapsed time: {} seconds".format((time.time() - start_time)))
+print("Total elapsed time: " + \
+	  str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))
