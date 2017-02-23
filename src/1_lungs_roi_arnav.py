@@ -186,6 +186,10 @@ def segment_all_ct_scans(path): # Iterate through all folders
 		ct_scan = read_ct_scan(path + folder + '/') 
 		segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
 		
+		# Save image.jpg with input image and binary mask superimposed
+		plot_ct_scan(segmented_ct_scan)
+		plt.savefig(OUTPUT_DIRECTORY + folder+ '.png', format='png')
+		
 		# Save object as a .pickle
 		with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
 			pickle.dump(segmented_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)
