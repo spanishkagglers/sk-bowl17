@@ -13,6 +13,9 @@ global COMPETITION_HOME, COMPETITION_DATASET_DIRECTORY
 COMPETITION_HOME = '../'
 
 COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
+# Comment previous and uncomment to use sample_images or mini_stage1 folders for testing
+#COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'sample_images/' # 20 patients
+#COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
 
 ####################### 1 - ARNAV'S LUNGS ROI WAY
