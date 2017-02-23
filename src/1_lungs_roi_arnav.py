@@ -189,6 +189,7 @@ def segment_all_ct_scans(path): # Iterate through all folders
 		# Save image as .png with input image and binary mask superimposed
 		plot_ct_scan(segmented_ct_scan)
 		plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
+		plt.close()
 		
 		# Save object as a .pickle
 		with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
@@ -202,4 +203,5 @@ def segment_all_ct_scans(path): # Iterate through all folders
 
 segment_all_ct_scans(INPUT_DIRECTORY)
 
-print("Total elapsed time: {} seconds".format(round((time.time() - start_time), 2)))
+print("Total elapsed time: " + \
+	  str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))
