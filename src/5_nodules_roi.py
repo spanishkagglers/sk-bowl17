@@ -107,7 +107,7 @@ def get_nodules(segmented_ct_scan):
 	return segmented_ct_scan
 
 		
-def get_nodules_all_segmented_ct_scans(path, image): # Iterate through all folders
+def get_nodules_all_segmented_ct_scans(path, image): # Iterate through all pickles
 	
 	# Read all segmented lungs pickles, ignore other extension files (like images)
 	all_pickles = [p.split('.')[0] for p in os.listdir(path) if p.endswith('.pickle')]
