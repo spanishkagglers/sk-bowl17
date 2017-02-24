@@ -148,7 +148,7 @@ for k, col in zip(unique_labels, colors):
     center=np.reshape(center,(3))
     radius=np.max(distances)
     
-    nodules.append((center,radius))
+    
     
     if True: #radius>40:
         ax.plot(cluster_x, cluster_y, cluster_z, c=col, marker=',', lw = 0, alpha=1)
@@ -157,6 +157,9 @@ for k, col in zip(unique_labels, colors):
         #box
         plot_patch(center[0], center[1], center[2],radius,ax)
         #print(k)
+    
+    center[2]=max(z)-center[2]    
+    nodules.append((center,radius))
         
 
 plt.show()
