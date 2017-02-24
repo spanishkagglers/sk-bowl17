@@ -188,18 +188,21 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 	
 		# Segment
 		print('Segmenting ' + folder + '...')
-		ct_scan = read_ct_scan(path + folder + '/') 
-		segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
+		try:
+			ct_scan = read_ct_scan(path + folder + '/') 
+			segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
 		
-		# If true, save image as .png with input image and binary mask superimposed
-		if image:
-			plot_ct_scan(segmented_ct_scan)
-			plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
-			plt.close()
-		
-		# Save object as a .pickle
-		with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
-			pickle.dump(segmented_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)
+			# If true, save image as .png with input image and binary mask superimposed
+			if image:
+				plot_ct_scan(segmented_ct_scan)
+				plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
+				plt.close()
+			
+			# Save object as a .pickle
+			with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
+				pickle.dump(segmented_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)
+		except ValueError:
+			print(folder + ' folder rised a ValueError! Continuing...')
 		
 		# Print and time to finish
 		i_time = time.time() - i_start_time
