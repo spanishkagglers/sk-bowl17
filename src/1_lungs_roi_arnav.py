@@ -171,11 +171,15 @@ def segment_lung_from_ct_scan(ct_scan):
 
 
 def segment_all_ct_scans(path, image): # Iterate through all folders
+	# Take all folders, forget about the ones already segmented
 	all_folders = os.listdir(path)
-	print('Found ' + str(len(all_folders)) + ' scans. Segmenting...')
-	i = 0
-	for folder in all_folders:
-		i += 1
+	all_pickles = [p.split('.')[0] \
+				for p in os.listdir(OUTPUT_DIRECTORY) if p.endswith('.pickle')]
+	folders_to_segment = [f for f in all_folders if f not in all_pickles]
+	print('Found ' + str(len(all_folders)) + ' folders. Segmenting ' \
+	   + str(len(folders_to_segment)) + ' ...')
+	
+	for folder in folders_to_segment:
 		i_start_time = time.time()
 		# If pickle already exist, skip to the next folder
 		if os.path.isfile(OUTPUT_DIRECTORY + folder + '.pickle'):
@@ -183,6 +187,7 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 			continue
 	
 		# Segment
+		print('Segmenting ' + folder + '...')
 		ct_scan = read_ct_scan(path + folder + '/') 
 		segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
 		
@@ -197,10 +202,9 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 			pickle.dump(segmented_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)
 		
 		# Print and time to finish
-		time_finish = round(time.time() - i_start_time) * (len(all_folders) - i)
-		print(folder + ' segmentation created. About ' + \
-			str(time.strftime('%H:%M:%S', time.gmtime(time_finish))) + \
-			' left.')
+		i_time = time.time() - i_start_time
+		print(folder + ' segmentation created in ' + \
+			str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
 
 # Turn to False to not save a image with slices and binary mask superimposed
 segment_all_ct_scans(INPUT_DIRECTORY, True)
