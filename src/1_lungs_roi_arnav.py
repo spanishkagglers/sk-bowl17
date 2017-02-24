@@ -177,7 +177,7 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 				for p in os.listdir(OUTPUT_DIRECTORY) if p.endswith('.pickle')]
 	folders_to_segment = [f for f in all_folders if f not in all_pickles]
 	print('Found ' + str(len(all_folders)) + ' folders. Segmenting ' \
-	   + str(len(folders_to_segment)) + ' ...')
+	   + str(len(folders_to_segment)) + '...')
 	
 	for folder in folders_to_segment:
 		i_start_time = time.time()
@@ -201,13 +201,16 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 			# Save object as a .pickle
 			with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
 				pickle.dump(segmented_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)
+			
+			# Print and time to finish
+			i_time = time.time() - i_start_time
+			print('Successfully created in ' + \
+				str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
+		
 		except ValueError:
 			print(folder + ' folder rised a ValueError! Continuing...')
-		
-		# Print and time to finish
-		i_time = time.time() - i_start_time
-		print(folder + ' segmentation created in ' + \
-			str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
+		except IndexError:
+			print(folder + ' folder rised an IndexError! Continuing...')
 
 # Turn to False to not save a image with slices and binary mask superimposed
 segment_all_ct_scans(INPUT_DIRECTORY, True)
