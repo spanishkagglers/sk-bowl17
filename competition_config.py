@@ -96,7 +96,7 @@ nodules_3d_segmentation_luna={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_Nodules_3D_segmentation_LUNA"016/',
 }
 
-####################### 6 - Nodules 3D segmentation
+####################### 7 - Nodules 3D segmentation
 #
 # Candidate Generation and LUNA16 preprocessing (part 2)
 # https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
@@ -109,3 +109,18 @@ nodules_3d_segmentation={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/7_Nodules_3D_segmentation/',
     'PRINT_IMAGES': False,
 }
+
+####################### 10 - Features Extraction Nodules 3D
+#
+# 
+# 
+
+global features_extraction_nodules_3d
+
+features_extraction_nodules_3d={
+    'INPUT_DIRECTORY_1' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
+    'INPUT_DIRECTORY_2' : nodules_3d_segmentation['OUTPUT_DIRECTORY'],
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_Features_Extraction_3D_Nodules/',
+}
+
+
