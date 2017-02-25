@@ -37,34 +37,16 @@ except:
 import time
 start_time = time.time()
 
-INPUT_DIRECTORY = d['INPUT_DIRECTORY']
-OUTPUT_DIRECTORY = d['OUTPUT_DIRECTORY']
+from util.plot_3d import *
 
-if not os.path.exists(OUTPUT_DIRECTORY):
-    os.makedirs(OUTPUT_DIRECTORY)
+if not os.path.exists(d['OUTPUT_DIRECTORY']):
+    os.makedirs(d['OUTPUT_DIRECTORY'])
 
-#from subprocess import check_output
-#print(check_output(["ls", INPUT_DIRECTORY]).decode("utf8"))
 
-def plot_patch(x,y,z,r,ax):
-    ax.plot([x-r/2,x-r/2,], [y-r/2,y-r/2], [z-r/2,z+r/2], c='r', marker='.')
-    ax.plot([x+r/2,x+r/2,], [y-r/2,y-r/2], [z-r/2,z+r/2], c='r', marker='.')
-    ax.plot([x-r/2,x-r/2,], [y+r/2,y+r/2], [z-r/2,z+r/2], c='r', marker='.')
-    ax.plot([x+r/2,x+r/2,], [y+r/2,y+r/2], [z-r/2,z+r/2], c='r', marker='.')
-    
-    ax.plot([x-r/2,x+r/2,], [y-r/2,y-r/2], [z+r/2,z+r/2], c='r', marker='.')
-    ax.plot([x-r/2,x+r/2,], [y+r/2,y+r/2], [z+r/2,z+r/2], c='r', marker='.')
-    ax.plot([x-r/2,x+r/2,], [y-r/2,y-r/2], [z-r/2,z-r/2], c='r', marker='.')
-    ax.plot([x-r/2,x+r/2,], [y+r/2,y+r/2], [z-r/2,z-r/2], c='r', marker='.')
-    
-    ax.plot([x-r/2,x-r/2,], [y-r/2,y+r/2], [z+r/2,z+r/2], c='r', marker='.')
-    ax.plot([x+r/2,x+r/2,], [y-r/2,y+r/2], [z+r/2,z+r/2], c='r', marker='.')
-    ax.plot([x-r/2,x-r/2,], [y-r/2,y+r/2], [z-r/2,z-r/2], c='r', marker='.')
-    ax.plot([x+r/2,x+r/2,], [y-r/2,y+r/2], [z-r/2,z-r/2], c='r', marker='.')
 
 def nodule_segmentation(ct_scan_id, output_filename, d):
 
-    with open(INPUT_DIRECTORY + ct_scan_id + '.pickle', 'rb') as handle:
+    with open(d['INPUT_DIRECTORY'] + ct_scan_id + '.pickle', 'rb') as handle:
         segmented_ct_scan = pickle.load(handle)
         
     if d['PRINT_IMAGES']: #radius>40:
@@ -132,7 +114,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         
         cluster_x=x[class_member_mask]
         cluster_y=y[class_member_mask]
-        cluster_z=max(z)-z[class_member_mask]
+        cluster_z=z[class_member_mask]
         cluster=np.vstack((cluster_x, cluster_y, cluster_z)).T
         
         img=np.zeros(shape=segmented_ct_scan.shape, dtype=np.uint8)
@@ -152,25 +134,25 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         
         
         if d['PRINT_IMAGES']: #radius>40:
-            ax.plot(cluster_x, cluster_y, cluster_z, c=col, marker=',', lw = 0, alpha=1)
+            plot_3d([cluster_x, cluster_y, cluster_z], max_z=max(z), col=col, ax=ax)
             #center:
-            ax.plot([center[0]], [center[1]], [center[2]], c='b', marker='o')
+            ax.plot([center[0]], [center[1]], [max(z)-center[2]], c='b', marker='o')
             #box
-            plot_patch(center[0], center[1], center[2],radius,ax)
+            plot_patch(center[0], center[1], max(z)-center[2],radius,ax)
             #print(k)
             
         
-        center[2]=max(z)-center[2]    
+        center[2]=center[2]    
         nodules.append({
             'ct_scan_id':ct_scan_id,
             'center':center,
             'radius':radius,
             'min_x': min(cluster_x),
             'min_y': min(cluster_y),
-            'min_z': max(z)-min(cluster_z),
+            'min_z': min(cluster_z),
             'max_x': max(cluster_x),
             'max_y': max(cluster_y),
-            'max_z': max(z)-max(cluster_z),
+            'max_z': max(cluster_z),
         })
         
         
@@ -184,10 +166,10 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         pickle.dump(nodules, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
 
-file_list=glob(INPUT_DIRECTORY+"*.pickle")
+file_list=glob(d['INPUT_DIRECTORY']+"*.pickle")
 for input_filename in tqdm(file_list):
     ct_scan_id = os.path.splitext(os.path.basename(input_filename))[0]
-    output_filename=OUTPUT_DIRECTORY + ct_scan_id + ".pickle"
+    output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
     if os.path.isfile(output_filename):
         #print('Skipping...'+ct_scan_id)
         pass
