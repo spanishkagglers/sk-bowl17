@@ -66,6 +66,10 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
 
     with open(INPUT_DIRECTORY + ct_scan_id + '.pickle', 'rb') as handle:
         segmented_ct_scan = pickle.load(handle)
+        
+    if d['PRINT_IMAGES']: #radius>40:
+        fig = plt.figure(figsize=(20,20))
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
     
     information_points = np.nonzero(segmented_ct_scan)
     num_points=information_points[1].shape[0]
@@ -148,19 +152,32 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         
         
         if d['PRINT_IMAGES']: #radius>40:
-            fig = plt.figure(figsize=(20,20))
-            ax = fig.add_subplot(1, 1, 1, projection='3d')
             ax.plot(cluster_x, cluster_y, cluster_z, c=col, marker=',', lw = 0, alpha=1)
             #center:
             ax.plot([center[0]], [center[1]], [center[2]], c='b', marker='o')
             #box
             plot_patch(center[0], center[1], center[2],radius,ax)
             #print(k)
+            
         
         center[2]=max(z)-center[2]    
-        nodules.append((center,radius))
-        plt.show()
+        nodules.append({
+            'ct_scan_id':ct_scan_id,
+            'center':center,
+            'radius':radius,
+            'min_x': min(cluster_x),
+            'min_y': min(cluster_y),
+            'min_z': max(z)-min(cluster_z),
+            'max_x': max(cluster_x),
+            'max_y': max(cluster_y),
+            'max_z': max(z)-max(cluster_z),
+        })
+        
+        
     
+    if d['PRINT_IMAGES']:
+        plt.show()
+        
     #print(len(unique_labels))
     
     with open(output_filename, 'wb') as handle:
