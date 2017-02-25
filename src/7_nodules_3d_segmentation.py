@@ -106,6 +106,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
     nodules=[]
     unique_labels = set(labels)
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    id_nodule=1
     for k, col in zip(unique_labels, colors):
         if k == -1: # garbage points!!!
             break
@@ -126,7 +127,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
                 int(round(np.mean(cluster_y))),
                 int(round(np.mean(cluster_z)))))
         center=np.reshape(center,(1,3))
-        distances=cdist(np.array(center), cluster)
+        distances=cdist(np.array(center), cluster, metric='euclidean')
         
         center=np.reshape(center,(3))
         radius=np.max(distances)
@@ -145,6 +146,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         center[2]=center[2]    
         nodules.append({
             'ct_scan_id':ct_scan_id,
+            'id_nodule':ct_scan_id+"_"+str(id_nodule),
             'center':center,
             'radius':radius,
             'min_x': min(cluster_x),
@@ -154,6 +156,8 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
             'max_y': max(cluster_y),
             'max_z': max(cluster_z),
         })
+        
+        id_nodule+=1
         
         
     
