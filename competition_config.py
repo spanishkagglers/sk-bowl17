@@ -83,6 +83,19 @@ nodules_roi_dashboard={
     'BALL_RADIUS':  2,
 }
 
+####################### 6 - Nodules 3D segmentation (LUNA-version)
+#
+# Candidate Generation and LUNA16 preprocessing (part 2)
+# https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
+
+global nodules_3d_segmentation_luna
+
+nodules_3d_segmentation_luna={
+    #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
+    'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_Nodules_3D_segmentation_LUNA"016/',
+}
+
 ####################### 6 - Nodules 3D segmentation
 #
 # Candidate Generation and LUNA16 preprocessing (part 2)
@@ -93,5 +106,6 @@ global nodules_3d_segmentation
 nodules_3d_segmentation={
     #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
     'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_Nodules_3D_segmentation/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/7_Nodules_3D_segmentation/',
+    'PRINT_IMAGES': False,
 }
