@@ -30,6 +30,8 @@ d=features_extraction_nodules_3d
 
 from scipy.spatial.distance import *
 
+from scipy import stats
+
 try:
     from tqdm import tqdm
 except:
@@ -54,15 +56,6 @@ def read_segmented_nodules_info(ct_scan_id, d):
         nodules_info = pickle.load(handle)
     return nodules_info       
 
-def feature_sphere_filled_ratio(nodule):
-    #center = np.array(nodule.shape)/2
-    #scipy.spatial.distance.cdist(center,)
-    radius = np.max(nodule.shape)/2
-    sphere_volumen = 4 * np.pi * radius**3 / 3
-    nodule_volumen = np.sum(nodule>0)
-    return(nodule_volumen/sphere_volumen)
-
-
 
 file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
 
@@ -78,14 +71,51 @@ for input_filename in tqdm(file_list):
         features = []
         for nod in nodules_info:
             
-            nodule = roi_mask[nod['min_z']:nod['max_z']+1, nod['min_y']:nod['max_y']+1, nod['min_x']:nod['max_x']+1]
-
+            zmin = nod['min_z']
+            zmax = nod['max_z']
+            ymin = nod['min_y']
+            ymax = nod['max_y']
+            xmin = nod['min_x']
+            xmax = nod['max_x']
+            
+            cuboid = roi_mask[zmin:zmax+1, ymin:ymax+1, xmin:xmax+1]
+            
+            cuboid_shape = cuboid.shape
+            cuboid_shape_ordered = np.sort(cuboid_shape)
+            cuboid_volume = (zmax-zmin+1)*(ymax-ymin+1)*(xmax-xmin+1)
+            cuboid_area = 2*((zmax-zmin+1)*(ymax-ymin+1)+(zmax-zmin+1)*(xmax-xmin+1)+(ymax-ymin+1)*(xmax-xmin+1))
+            
+            sphere_radius = np.max(cuboid.shape)/2  #scipy.spatial.distance.cdist(center,)
+            sphere_volume = 4 * np.pi * sphere_radius**3 / 3
+            
+            nodule_volume = np.sum(cuboid>0)
+            nodule_array = cuboid[cuboid>0]
+            
+            nodule_geo_center = np.array([zmax,ymax,xmax])
+            roi_geo_center = (np.array(roi_mask.shape)-1)/2
+            
             features.append({
             'ct_scan_id':nod['ct_scan_id'],
             'id':nod['id_nodule'],
-            'sphere_filled_ratio':feature_sphere_filled_ratio(nodule),
+            'cuboid_filled_ratio':nodule_volume/cuboid_volume,
+            'sphere_filled_ratio':nodule_volume/sphere_volume,
             'mass_center':nod['center'],
             'mass_radius':nod['radius'],
+            'hu_mean':np.mean(nodule_array),
+            'hu_sd':np.std(nodule_array),
+            'hu_mode': np.asscalar(stats.mode(nodule_array)[0]),
+            'nodule_volume':nodule_volume,
+            'cuboid_volume': cuboid_volume,
+            'cuboid_area_volume_ratio': cuboid_area/cuboid_volume,
+            'cuboid_most_asimetric_face_edges_ratio': cuboid_shape_ordered[0]/cuboid_shape_ordered[2],
+            'cuboid_diagonal':np.sqrt((zmax-zmin+1)**2+(ymax-ymin+1)**2+(xmax-xmin+1)**2),
+            'nodule_to_roi_center_distance': np.sqrt(np.sum((nodule_geo_center-roi_geo_center)**2)),
+            'nodule_xmax_xmaxRoi_ratio': xmax/roi_mask.shape[2],
+            'nodule_ymax_ymaxRoi_ratio': ymax/roi_mask.shape[1],
+            'nodule_zmax_zmaxRoi_ratio': zmax/roi_mask.shape[0],
+            'nodule_xcenter_xcenterRoi_ratio': nodule_geo_center[2]/roi_mask.shape[2],
+            'nodule_ycenter_ycenterRoi_ratio': nodule_geo_center[1]/roi_mask.shape[1],
+            'nodule_zcenter_zcenterRoi_ratio': nodule_geo_center[0]/roi_mask.shape[0],
             })
     
         with open(output_filename, 'wb') as handle:
