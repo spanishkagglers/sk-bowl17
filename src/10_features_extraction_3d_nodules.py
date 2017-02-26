@@ -84,6 +84,8 @@ for input_filename in tqdm(file_list):
             'ct_scan_id':nod['ct_scan_id'],
             'id':nod['id_nodule'],
             'sphere_filled_ratio':feature_sphere_filled_ratio(nodule),
+            'mass_center':nod['center'],
+            'mass_radius':nod['radius'],
             })
     
         with open(output_filename, 'wb') as handle:
