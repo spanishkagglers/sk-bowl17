@@ -56,6 +56,24 @@ def read_segmented_nodules_info(ct_scan_id, d):
         nodules_info = pickle.load(handle)
     return nodules_info       
 
+def unit_vector(vector):
+    """ Returns the unit vector of the vector  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 
 file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
 
@@ -94,6 +112,8 @@ for input_filename in tqdm(file_list):
             nodule_geo_center = np.array([zmax,ymax,xmax])
             roi_geo_center = (np.array(roi_mask.shape)-1)/2
             
+            roiGC_to_noduleGC_vector = nodule_geo_center-roi_geo_center
+            
             features.append({
             'ct_scan_id':nod['ct_scan_id'],
             'id':nod['id_nodule'],
@@ -109,13 +129,26 @@ for input_filename in tqdm(file_list):
             'cuboid_area_volume_ratio': cuboid_area/cuboid_volume,
             'cuboid_most_asimetric_face_edges_ratio': cuboid_shape_ordered[0]/cuboid_shape_ordered[2],
             'cuboid_diagonal':np.sqrt((zmax-zmin+1)**2+(ymax-ymin+1)**2+(xmax-xmin+1)**2),
-            'nodule_to_roi_center_distance': np.sqrt(np.sum((nodule_geo_center-roi_geo_center)**2)),
+            'nodule_center_to_roi_center_distance': np.sqrt(np.sum((roiGC_to_noduleGC_vector)**2)),
+            'nodule_center_to_xaxis_angle': angle_between([0,0,1],roiGC_to_noduleGC_vector),
+            'nodule_center_to_yaxis_angle': angle_between([0,1,0],roiGC_to_noduleGC_vector),
+            'nodule_center_to_zaxis_angle': angle_between([1,0,0],roiGC_to_noduleGC_vector),
             'nodule_xmax_xmaxRoi_ratio': xmax/roi_mask.shape[2],
             'nodule_ymax_ymaxRoi_ratio': ymax/roi_mask.shape[1],
             'nodule_zmax_zmaxRoi_ratio': zmax/roi_mask.shape[0],
             'nodule_xcenter_xcenterRoi_ratio': nodule_geo_center[2]/roi_mask.shape[2],
             'nodule_ycenter_ycenterRoi_ratio': nodule_geo_center[1]/roi_mask.shape[1],
             'nodule_zcenter_zcenterRoi_ratio': nodule_geo_center[0]/roi_mask.shape[0],
+            'nodule_fat_ratio':len(nodule_array[(nodule_array>=-100) & (nodule_array<=-50)])/nodule_volume,
+            'nodule_csf_ratio':len(nodule_array[nodule_array==15])/nodule_volume,
+            'nodule_kidney_ratio':len(nodule_array[nodule_array==30])/nodule_volume,
+            'nodule_blood_ratio':len(nodule_array[(nodule_array>=30) & (nodule_array<=45)])/nodule_volume,
+            'nodule_muscle_ratio':len(nodule_array[(nodule_array>=10) & (nodule_array<=40)])/nodule_volume,
+            'nodule_greymatter_ratio':len(nodule_array[(nodule_array>=37) & (nodule_array<=45)])/nodule_volume,
+            'nodule_whitematter_ratio':len(nodule_array[(nodule_array>=20) & (nodule_array<=30)])/nodule_volume,
+            'nodule_liver_ratio':len(nodule_array[(nodule_array>=40) & (nodule_array<=60)])/nodule_volume,
+            'nodule_soft_ratio':len(nodule_array[(nodule_array>=100) & (nodule_array<=300)])/nodule_volume,
+            'nodule_bone_ratio':len(nodule_array[nodule_array>=700])/nodule_volume,
             })
     
         with open(output_filename, 'wb') as handle:
