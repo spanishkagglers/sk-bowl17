@@ -136,7 +136,7 @@ def get_nodules_all_segmented_ct_scans(path, image): # Iterate through all pickl
 		
 		# Save object as a .pickle
 		with open(OUTPUT_DIRECTORY + segmented_lung + ".pickle", 'wb') as handle:
-			pickle.dump(segmented_nodules_ct_scan, handle, protocol=pickle.HIGHEST_PROTOCOL)	
+			pickle.dump(segmented_nodules_ct_scan, handle, protocol=2)	
 		
 		# Print and time to finish
 		time_finish = round(time.time() - i_start_time) * (len(all_pickles) - i)

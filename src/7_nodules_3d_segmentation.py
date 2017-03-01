@@ -167,7 +167,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
     #print(len(unique_labels))
     
     with open(output_filename, 'wb') as handle:
-        pickle.dump(nodules, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(nodules, handle, protocol=2)
         
 
 file_list=glob(d['INPUT_DIRECTORY']+"*.pickle")
