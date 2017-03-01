@@ -153,7 +153,7 @@ for input_filename in tqdm(file_list):
     
         with open(output_filename, 'wb') as handle:
             output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
-            pickle.dump(features, handle, s=2)
+            pickle.dump(features, handle, protocol=2)
             
         
 print("Ellapsed time: {} seconds".format((time.time() - start_time)))
