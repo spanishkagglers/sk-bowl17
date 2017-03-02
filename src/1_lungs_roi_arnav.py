@@ -61,7 +61,6 @@ def read_ct_scan(folder_name):
 	# Saw -2048 instead of -2000, original has == -2000, changed for <= -2000
 	# Instead of 0 (water), we use -1000 (air)
 	slicesA[slicesA <= -2000] = -1000
-	slicesA[slicesA <= -2000] = -1000
 
 	slicesA += 1000 # So it will show
 	
