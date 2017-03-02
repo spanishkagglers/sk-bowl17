@@ -1,10 +1,16 @@
 from __future__ import print_function
 import os
+from skimage.morphology import ball, binary_closing
+from skimage.measure import label,regionprops
+from skimage import measure
 import pickle
 import boto3
 
 import sys
 sys.path.append("../")
+# Import our competition variables
+from competition_config import *
+d=nodules_roi_dashboard
 import time
 start_time = time.time()
 
@@ -17,8 +23,6 @@ os.makedirs('/tmp/output/')
 def get_nodules(segmented_ct_scan):
     
     segmented_ct_scan[segmented_ct_scan < 604] = 0
-    #plot_ct_scan(segmented_ct_scan)
-    #plot_3d(segmented_ct_scan, 604)
 
     #After filtering, there are still lot of noise because of blood vessels.
     #Thus we further remove the two largest connected component.
