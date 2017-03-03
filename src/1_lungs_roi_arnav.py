@@ -88,7 +88,7 @@ def get_segmented_lungs(image, plot=False):
     # Step 5: Erosion operation with a disk of radius 2. This operation is
     # seperate the lung nodules attached to the blood vessels
     # using EROSION_BALL_RADIUS from competition_config.py
-    selem = disk(arnavs_lugns_roi_dashboarD['EROSION_BALL_RADIUS'])
+    selem = disk(D['EROSION_BALL_RADIUS'])
     binary = binary_erosion(binary, selem)
     if plot:
         print('Step 5: Erosion operation')
@@ -98,7 +98,7 @@ def get_segmented_lungs(image, plot=False):
     # Step 6: Closure operation with a disk of radius 10. This operation is
     # to keep nodules attached to the lung wall
     # using CLOSING_BALL_RADIUS from competition_config.py
-    selem = disk(arnavs_lugns_roi_dashboarD['CLOSING_BALL_RADIUS'])
+    selem = disk(D['CLOSING_BALL_RADIUS'])
     binary = binary_closing(binary, selem)
     if plot:
         print('Step 6: Closure operation')
