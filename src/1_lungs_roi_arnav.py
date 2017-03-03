@@ -15,7 +15,7 @@ import pickle
 
 import numpy as np # linear algebra
 from skimage.morphology import disk, binary_erosion, binary_closing
-from skimage.measure import label,regionprops
+from skimage.measure import label, regionprops
 from skimage.filters import roberts
 from skimage.segmentation import clear_border
 from scipy import ndimage as ndi
@@ -39,37 +39,37 @@ def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
     for i in range(0, scan.shape[0], 5):
         plots[int(i / 20), int((i % 20) / 5)].axis('off')
-        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
+        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone)
 
 
-def get_segmented_lungs(im, plot=False):
-    # This funtion segments the lungs from the given 2D slice.
-    
+def get_segmented_lungs(image, plot=False):
+    # This funtion segments the lungs from the given 2D slice
+
     if plot:
         f, plots = plt.subplots(8, 1, figsize=(5, 40))
 
     # Step 1: Convert into a binary image.
     # A threshold of 604(-400 HU) is used at all places because it was
     # found in experiments that it works just fine
-    binary = im < 604
+    binary = image < 604
     if plot:
         print('Step 1: Convert into a binary image.')
         plots[0].axis('off')
-        plots[0].imshow(binary, cmap=plt.cm.bone) 
+        plots[0].imshow(binary, cmap=plt.cm.bone)
 
-    # Step 2: Remove the blobs connected to the border of the image.
+    # Step 2: Remove the blobs connected to the border of the image
     cleared = clear_border(binary)
     if plot:
         print('Step 2: Remove the blobs connected to the border of the image.')
         plots[1].axis('off')
-        plots[1].imshow(cleared, cmap=plt.cm.bone) 
+        plots[1].imshow(cleared, cmap=plt.cm.bone)
 
     # Step 3: Label the image.
     label_image = label(cleared)
     if plot:
         print('Step 3: Label the image.')
         plots[2].axis('off')
-        plots[2].imshow(label_image, cmap=plt.cm.bone) 
+        plots[2].imshow(label_image, cmap=plt.cm.bone)
 
     # Step 4: Keep the labels with 2 largest areas.
     areas = [r.area for r in regionprops(label_image)]
@@ -83,9 +83,9 @@ def get_segmented_lungs(im, plot=False):
     if plot:
         print('Step 4: Keep the labels with 2 largest areas.')
         plots[3].axis('off')
-        plots[3].imshow(binary, cmap=plt.cm.bone) 
+        plots[3].imshow(binary, cmap=plt.cm.bone)
 
-    # Step 5: Erosion operation with a disk of radius 2. This operation is 
+    # Step 5: Erosion operation with a disk of radius 2. This operation is
     # seperate the lung nodules attached to the blood vessels
     # using EROSION_BALL_RADIUS from competition_config.py
     selem = disk(arnavs_lugns_roi_dashboarD['EROSION_BALL_RADIUS'])
@@ -93,9 +93,9 @@ def get_segmented_lungs(im, plot=False):
     if plot:
         print('Step 5: Erosion operation')
         plots[4].axis('off')
-        plots[4].imshow(binary, cmap=plt.cm.bone) 
+        plots[4].imshow(binary, cmap=plt.cm.bone)
 
-    # Step 6: Closure operation with a disk of radius 10. This operation is 
+    # Step 6: Closure operation with a disk of radius 10. This operation is
     # to keep nodules attached to the lung wall
     # using CLOSING_BALL_RADIUS from competition_config.py
     selem = disk(arnavs_lugns_roi_dashboarD['CLOSING_BALL_RADIUS'])
@@ -103,7 +103,7 @@ def get_segmented_lungs(im, plot=False):
     if plot:
         print('Step 6: Closure operation')
         plots[5].axis('off')
-        plots[5].imshow(binary, cmap=plt.cm.bone) 
+        plots[5].imshow(binary, cmap=plt.cm.bone)
 
     # Step 7: Fill in the small holes inside the binary mask of lungs.
     edges = roberts(binary)
@@ -111,17 +111,17 @@ def get_segmented_lungs(im, plot=False):
     if plot:
         print('Step 7: Fill in the small holes inside the binary mask of lungs.')
         plots[6].axis('off')
-        plots[6].imshow(binary, cmap=plt.cm.bone) 
+        plots[6].imshow(binary, cmap=plt.cm.bone)
 
     # Step 8: Superimpose the binary mask on the input image.
     get_high_vals = binary == 0
-    im[get_high_vals] = 0
+    image[get_high_vals] = 0
     if plot:
         print('Step 8: Superimpose the binary mask on the input image.')
         plots[7].axis('off')
-        plots[7].imshow(im, cmap=plt.cm.bone) 
+        plots[7].imshow(image, cmap=plt.cm.bone)
 
-    return im
+    return image
 
 
 def segment_lung_from_ct_scan(ct_scan):
@@ -140,15 +140,19 @@ def batch_to_process(path):
     # Several python scripts can run in parallel. We will make shuffled batches
     # of 100 patients until finalized.
     shuffle(to_process)
-    if len(to_process) > 100: return to_process[0:100]
-    else: return to_process
+    if len(to_process) > 100:
+        return to_process[0:100]
+    else:
+        return to_process
 
 
 def segment_all_ct_scans(path, image): # Iterate through all folders
-    patients = [] # Initialize lenght of previus batch to not iterate through errors
+    # Initialize lenght of previus batch to not iterate through errors
+    patients = []
     while True:
         patients, len_prev_batch = batch_to_process(path), len(patients)
-        if len(patients) == 0 or len(patients) == len_prev_batch: break
+        if len(patients) == 0 or len(patients) == len_prev_batch:
+            break
 
         for patient in patients: # patient has .pickle extension
             i_start_time = time.time()
@@ -171,7 +175,7 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
                     plot_ct_scan(segmented_ct_scan)
                     # patient has .pickle extension, we will remove it to save .png
                     plt.savefig(D['OUTPUT_DIRECTORY'] + \
-                                patient.rsplit('.',1)[0] + '.png', format='png')
+                                patient.rsplit('.', 1)[0] + '.png', format='png')
                     plt.close()
 
                 # Save object as a .pickle
