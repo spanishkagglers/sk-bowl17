@@ -18,6 +18,10 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
 
+
+import pickle
+PICKLE_PROTOCOL=2 #pickle.HIGHEST_PROTOCOL
+
 ####################### 0 - RESIZE DICOMS
 #
 # Part of Full Preprocessing Tutorial to resample DICOMs to a certain isotropic
@@ -149,6 +153,18 @@ nodules_3d_segmentation={
     'PRINT_IMAGES': False,
 }
 
+####################### 7B - reduce CSV
+#
+# reduce: joins all centerradius info from step 7 pickles, into a sligle CSV
+
+
+global nodules_info_csv_from_step_7
+
+nodules_info_csv_from_step_7={
+    #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
+    'INPUT_DIRECTORY' : nodules_3d_segmentation['OUTPUT_DIRECTORY'],
+    'OUTPUT_FILE' : COMPETITION_HOME + 'output/step-7-nodules.{}',
+}
 
 ####################### 8 - 3D chunks extraction
 #

@@ -180,7 +180,7 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
 
                 # Save object as a .pickle
                 with open(D['OUTPUT_DIRECTORY'] + patient, 'wb') as handle:
-                    pickle.dump(segmented_ct_scan, handle, protocol=2)
+                    pickle.dump(segmented_ct_scan, handle, protocol=PICKLE_PROTOCOL)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

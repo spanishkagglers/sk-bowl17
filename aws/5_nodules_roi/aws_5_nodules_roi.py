@@ -78,7 +78,7 @@ def lambda_handler(event, context):
         segmented_nodules_ct_scan = get_nodules(segmented_ct_scan)
 
         with open(upload_path, 'wb') as handle:
-            pickle.dump(segmented_nodules_ct_scan, handle, protocol=2)
+            pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)
         print('Uploading', segmented_nodules_ct_scan)
         s3.upload_file(upload_path, bucket, 'output/5_nodules_roi/' + key)
 

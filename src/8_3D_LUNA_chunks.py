@@ -81,7 +81,7 @@ def save_LUNA_chunks(subfolder, prefix="ann"):
                         plt.show()
 
                     with open(OUTPUT_DIRECTORY + ann_file , 'wb') as handle:
-                        pickle.dump(chunk, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        pickle.dump(chunk, handle, protocol=PICKLE_PROTOCOL)
                         # the size of each chunk or annotation file is 64x64x64x2 (int16 has 2 bytes per voxel) = 524 KB
     t2 = time.time()
     print ("Annotation chunks pickled:", n_ann, ". Processing time (seconds):", (t2-t1))

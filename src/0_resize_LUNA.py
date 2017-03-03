@@ -104,7 +104,7 @@ def resize_save_LUNA_imgs(subfolder):
             numpyImage, numpyOrigin, numpySpacing = load_itk_image(input_subfolder + img_file,
                          resizeCT=True, filterBound=True, transform2realHU=True, correct_inv=True)
             with open(output_subfolder + LUNApickle , 'wb') as handle:
-                        pickle.dump(numpyImage, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        pickle.dump(numpyImage, handle, protocol=PICKLE_PROTOCOL)
 
 # if D0 inside main, not visible when import 0_resize_LUNA from another file
 D0 = resize_LUNA_dashboard # imported from competition_config.py
