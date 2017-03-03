@@ -17,6 +17,20 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
 
+####################### 0 - RESIZE DICOMS
+#
+# Part of Full Preprocessing Tutorial to resample DICOMs to a certain isotropic
+# resolution. Pixel spacing varies between pacients, this will resize the dataset.
+# https://www.kaggle.com/gzuidhof/data-science-bowl-2017/notebook
+
+global resize_dashboard
+
+resize_dashboard={
+    'INPUT_DIRECTORY' : COMPETITION_DATASET_DIRECTORY,
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/0_resize/',
+    'NEW_SPACING': [1, 1, 1],
+}
+
 ####################### 1 - ARNAV'S LUNGS ROI WAY
 #
 # Candidate Generation and LUNA16 preprocessing (part 1)
@@ -25,7 +39,7 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 global arnavs_lugns_roi_dashboard
 
 arnavs_lugns_roi_dashboard={
-    'INPUT_DIRECTORY' : COMPETITION_DATASET_DIRECTORY,
+    'INPUT_DIRECTORY' : resize_dashboard['OUTPUT_DIRECTORY'],
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/1_lungs_roi_arnav/',
     'EROSION_BALL_RADIUS': 2,
     'CLOSING_BALL_RADIUS': 10,
@@ -39,7 +53,7 @@ arnavs_lugns_roi_dashboard={
 global watershed_lugns_roi_dashboard
 
 watershed_lugns_roi_dashboard={
-    'INPUT_DIRECTORY' : COMPETITION_DATASET_DIRECTORY,
+    'INPUT_DIRECTORY' : resize_dashboard['OUTPUT_DIRECTORY'],
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/2_lungs_roi_watershed/',
 }
 
