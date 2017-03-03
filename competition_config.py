@@ -32,6 +32,30 @@ resize_dashboard={
     'NEW_SPACING': [1, 1, 1],
 }
 
+global LUNA_ROOT, LUNA_DATASET_DIRECTORY, LUNA_RESIZED_DIRECTORY, LUNA_SUBFOLDERS, LUNA_CSV_DIRECTORY
+
+LUNA_ROOT = COMPETITION_HOME + "LUNA16/" # OFFICIAL
+# LUNA_ROOT = "../../../LUNA16/" # TEST AJR
+LUNA_DATASET_DIRECTORY = LUNA_ROOT + "IMG_ORIG/"
+LUNA_RESIZED_DIRECTORY = LUNA_ROOT + "IMG_111/"
+LUNA_SUBFOLDERS = ["subset" + str(i) + "/" for i in range(10)]
+LUNA_CSV_DIRECTORY = LUNA_ROOT + "CSVFILES/"
+LUNA_ORIGIN_OF_IMAGES_FILE = LUNA_CSV_DIRECTORY + "origin_of_images.csv"
+
+
+####################### 0 - RESIZE LUNA
+
+global resize_LUNA_dashboard
+
+resize_LUNA_dashboard={
+    'LUNA_ROOT' : LUNA_ROOT,
+    'INPUT_DIRECTORY' : LUNA_DATASET_DIRECTORY,
+    'OUTPUT_DIRECTORY' : LUNA_RESIZED_DIRECTORY,
+    'SUBFOLDERS' : LUNA_SUBFOLDERS,
+    'NEW_SPACING': [1, 1, 1],
+    'ORIGIN_OF_IMAGES_FILE': LUNA_ORIGIN_OF_IMAGES_FILE
+}
+
 ####################### 1 - ARNAV'S LUNGS ROI WAY
 #
 # Candidate Generation and LUNA16 preprocessing (part 1)
@@ -124,6 +148,30 @@ nodules_3d_segmentation={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/7_Nodules_3D_segmentation/',
     'PRINT_IMAGES': False,
 }
+
+
+####################### 8 - 3D chunks extraction
+#
+CHUNK_SIDE = 64
+
+LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations.csv"
+LUNA_ANN = LUNA_ROOT + "ANN" + str(CHUNK_SIDE) + "/" # LUNA Annotations
+
+LUNA_ANN_EX_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations_excluded.csv"
+LUNA_ANN_EX = LUNA_ROOT + "ANN_EX" + str(CHUNK_SIDE) + "/" # LUNA Annotations excluded
+
+chunks_extraction={
+    'LUNA_ROOT' : LUNA_ROOT,
+    'INPUT_DIRECTORY' : LUNA_RESIZED_DIRECTORY,
+    'CHUNK_DIMS': (CHUNK_SIDE, CHUNK_SIDE, CHUNK_SIDE),
+    'ANN_CSV_FILE': LUNA_ANN_CSV_FILE,
+    'OUTPUT_ANN_IMG_DIR' : LUNA_ANN,
+    'ANN_EX_CSV_FILE': LUNA_ANN_EX_CSV_FILE,
+    'OUTPUT_ANN_EX_IMG_DIR' : LUNA_ANN_EX,
+    'SUBFOLDERS' : LUNA_SUBFOLDERS,
+    'ORIGIN_OF_IMAGES_FILE': LUNA_ORIGIN_OF_IMAGES_FILE
+}
+
 
 ####################### 10 - Features Extraction Nodules 3D
 #
