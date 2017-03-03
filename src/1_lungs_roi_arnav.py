@@ -1,218 +1,195 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar  3 00:59:56 2017
+
+@authors: virilo, adrianmelic
+"""
 # Based on:
 # https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
 
-import numpy as np # linear algebra
 import os
+import time
+from random import shuffle
+import pickle
+
+import numpy as np # linear algebra
 from skimage.morphology import disk, binary_erosion, binary_closing
 from skimage.measure import label,regionprops
 from skimage.filters import roberts
 from skimage.segmentation import clear_border
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
-import dicom
-import pickle
 
 import sys
 sys.path.append("../")
 # Import our competition variables
 from competition_config import *
-d=arnavs_lugns_roi_dashboard
+D = arnavs_lugns_roi_dashboard
 
-import time
-start_time = time.time()
+START_TIME = time.time()
 
-INPUT_DIRECTORY = d['INPUT_DIRECTORY']
-OUTPUT_DIRECTORY = d['OUTPUT_DIRECTORY']
+if not os.path.exists(D['OUTPUT_DIRECTORY']):
+    os.makedirs(D['OUTPUT_DIRECTORY'])
 
-if not os.path.exists(OUTPUT_DIRECTORY):
-	os.makedirs(OUTPUT_DIRECTORY)
-
-# Input data files are available in the INPUT_DIRECTORY.
-# Any results you write has to be saved in the OUTPUT_DIRECTORY.
-
-
-def read_ct_scan(folder_name):
-	# Read the slices from the dicom file
-	slicesL = [dicom.read_file(folder_name + filename) for filename in os.listdir(folder_name)]
-	
-	# Sort the dicom slices in their respective order
-	slicesL.sort(key=lambda x: int(x.InstanceNumber))
-	
-	slice_thickness = slicesL[0].ImagePositionPatient[2] - \
-	slicesL[1].ImagePositionPatient[2] # Will be < 0 on inverted images
-		
-	#slice_thickness1 = slicesL[0].SliceLocation - slicesL[1].SliceLocation
-	#print(folder_name, slice_thickness, slice_thickness1)
-		
-	# Get the pixel values for all the slices
-	slicesA = np.stack([s.pixel_array for s in slicesL])
-	slicesA = slicesA.astype(np.int16)
-	
-	# Convert to Hounsfield units (HU)
-	intercept = slicesL[0].RescaleIntercept
-	slope = slicesL[0].RescaleSlope
-	
-	if slope != 1:
-		slicesA = slope * slicesA.astype(np.float64)
-		slicesA = slicesA.astype(np.int16)
-
-	slicesA += np.int16(intercept)
-	
-	# Saw -2048 instead of -2000, original has == -2000, changed for <= -2000
-	# Instead of 0 (water), we use -1000 (air)
-	slicesA[slicesA <= -2000] = -1000
-
-	slicesA += 1000 # So it will show
-	
-	# For inverted lungs:
-	if slice_thickness < 0:
-		slicesA = slicesA[::-1]
-
-	slicesA = np.array(slicesA, dtype=np.int16)
-
-	return slicesA
-
-
-# Now we will plot a few more images of the slices using the plot_ct_scan function.
+# Input data files are available in the D['INPUT_DIRECTORY'].
+# Any results you write has to be saved in the D['OUTPUT_DIRECTORY'].
 
 def plot_ct_scan(scan):
-	f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
-	for i in range(0, scan.shape[0], 5):
-		plots[int(i / 20), int((i % 20) / 5)].axis('off')
-		plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
+    f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
+    for i in range(0, scan.shape[0], 5):
+        plots[int(i / 20), int((i % 20) / 5)].axis('off')
+        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
 
-
-# This funtion segments the lungs from the given 2D slice.
 
 def get_segmented_lungs(im, plot=False):
-	
-	if plot == True:
-		f, plots = plt.subplots(8, 1, figsize=(5, 40))
+    # This funtion segments the lungs from the given 2D slice.
+    
+    if plot:
+        f, plots = plt.subplots(8, 1, figsize=(5, 40))
 
-	# Step 1: Convert into a binary image.
-	# A threshold of 604(-400 HU) is used at all places because it was
-	# found in experiments that it works just fine
-	binary = im < 604
-	if plot == True:
-		print('Step 1: Convert into a binary image.')
-		plots[0].axis('off')
-		plots[0].imshow(binary, cmap=plt.cm.bone) 
+    # Step 1: Convert into a binary image.
+    # A threshold of 604(-400 HU) is used at all places because it was
+    # found in experiments that it works just fine
+    binary = im < 604
+    if plot:
+        print('Step 1: Convert into a binary image.')
+        plots[0].axis('off')
+        plots[0].imshow(binary, cmap=plt.cm.bone) 
 
-	# Step 2: Remove the blobs connected to the border of the image.
-	cleared = clear_border(binary)
-	if plot == True:
-		print('Step 2: Remove the blobs connected to the border of the image.')
-		plots[1].axis('off')
-		plots[1].imshow(cleared, cmap=plt.cm.bone) 
-	
-	# Step 3: Label the image.
-	label_image = label(cleared)
-	if plot == True:
-		print('Step 3: Label the image.')
-		plots[2].axis('off')
-		plots[2].imshow(label_image, cmap=plt.cm.bone) 
+    # Step 2: Remove the blobs connected to the border of the image.
+    cleared = clear_border(binary)
+    if plot:
+        print('Step 2: Remove the blobs connected to the border of the image.')
+        plots[1].axis('off')
+        plots[1].imshow(cleared, cmap=plt.cm.bone) 
 
-	# Step 4: Keep the labels with 2 largest areas.
-	areas = [r.area for r in regionprops(label_image)]
-	areas.sort()
-	if len(areas) > 2:
-		for region in regionprops(label_image):
-			if region.area < areas[-2]:
-				for coordinates in region.coords:
-					label_image[coordinates[0], coordinates[1]] = 0
-	binary = label_image > 0
-	if plot == True:
-		print('Step 4: Keep the labels with 2 largest areas.')
-		plots[3].axis('off')
-		plots[3].imshow(binary, cmap=plt.cm.bone) 
+    # Step 3: Label the image.
+    label_image = label(cleared)
+    if plot:
+        print('Step 3: Label the image.')
+        plots[2].axis('off')
+        plots[2].imshow(label_image, cmap=plt.cm.bone) 
 
-	# Step 5: Erosion operation with a disk of radius 2. This operation is 
-	# seperate the lung nodules attached to the blood vessels
-	# using EROSION_BALL_RADIUS from competition_config.py
-	selem = disk(arnavs_lugns_roi_dashboard['EROSION_BALL_RADIUS'])
-	binary = binary_erosion(binary, selem)
-	if plot == True:
-		print('Step 5: Erosion operation')
-		plots[4].axis('off')
-		plots[4].imshow(binary, cmap=plt.cm.bone) 
-	
-	# Step 6: Closure operation with a disk of radius 10. This operation is 
-	# to keep nodules attached to the lung wall
-	# using CLOSING_BALL_RADIUS from competition_config.py
-	selem = disk(arnavs_lugns_roi_dashboard['CLOSING_BALL_RADIUS'])
-	binary = binary_closing(binary, selem)
-	if plot == True:
-		print('Step 6: Closure operation')
-		plots[5].axis('off')
-		plots[5].imshow(binary, cmap=plt.cm.bone) 
+    # Step 4: Keep the labels with 2 largest areas.
+    areas = [r.area for r in regionprops(label_image)]
+    areas.sort()
+    if len(areas) > 2:
+        for region in regionprops(label_image):
+            if region.area < areas[-2]:
+                for coordinates in region.coords:
+                    label_image[coordinates[0], coordinates[1]] = 0
+    binary = label_image > 0
+    if plot:
+        print('Step 4: Keep the labels with 2 largest areas.')
+        plots[3].axis('off')
+        plots[3].imshow(binary, cmap=plt.cm.bone) 
 
-	# Step 7: Fill in the small holes inside the binary mask of lungs.
-	edges = roberts(binary)
-	binary = ndi.binary_fill_holes(edges)
-	if plot == True:
-		print('Step 7: Fill in the small holes inside the binary mask of lungs.')
-		plots[6].axis('off')
-		plots[6].imshow(binary, cmap=plt.cm.bone) 
+    # Step 5: Erosion operation with a disk of radius 2. This operation is 
+    # seperate the lung nodules attached to the blood vessels
+    # using EROSION_BALL_RADIUS from competition_config.py
+    selem = disk(arnavs_lugns_roi_dashboarD['EROSION_BALL_RADIUS'])
+    binary = binary_erosion(binary, selem)
+    if plot:
+        print('Step 5: Erosion operation')
+        plots[4].axis('off')
+        plots[4].imshow(binary, cmap=plt.cm.bone) 
 
-	# Step 8: Superimpose the binary mask on the input image.
-	get_high_vals = binary == 0
-	im[get_high_vals] = 0
-	if plot == True:
-		print('Step 8: Superimpose the binary mask on the input image.')
-		plots[7].axis('off')
-		plots[7].imshow(im, cmap=plt.cm.bone) 
-		
-	return im
+    # Step 6: Closure operation with a disk of radius 10. This operation is 
+    # to keep nodules attached to the lung wall
+    # using CLOSING_BALL_RADIUS from competition_config.py
+    selem = disk(arnavs_lugns_roi_dashboarD['CLOSING_BALL_RADIUS'])
+    binary = binary_closing(binary, selem)
+    if plot:
+        print('Step 6: Closure operation')
+        plots[5].axis('off')
+        plots[5].imshow(binary, cmap=plt.cm.bone) 
+
+    # Step 7: Fill in the small holes inside the binary mask of lungs.
+    edges = roberts(binary)
+    binary = ndi.binary_fill_holes(edges)
+    if plot:
+        print('Step 7: Fill in the small holes inside the binary mask of lungs.')
+        plots[6].axis('off')
+        plots[6].imshow(binary, cmap=plt.cm.bone) 
+
+    # Step 8: Superimpose the binary mask on the input image.
+    get_high_vals = binary == 0
+    im[get_high_vals] = 0
+    if plot:
+        print('Step 8: Superimpose the binary mask on the input image.')
+        plots[7].axis('off')
+        plots[7].imshow(im, cmap=plt.cm.bone) 
+
+    return im
 
 
 def segment_lung_from_ct_scan(ct_scan):
-	return np.asarray([get_segmented_lungs(slice) for slice in ct_scan])
+    return np.asarray([get_segmented_lungs(slice) for slice in ct_scan])
+
+
+def batch_to_process(path):
+    # Take all files/folders to process, forget about the ones already processed
+    patients = os.listdir(path)
+    processed = [p.split('.')[0] \
+                for p in os.listdir(D['OUTPUT_DIRECTORY']) if p.endswith('.pickle')]
+    to_process = [f for f in patients if f not in processed]
+    print('There are ' + str(len(patients)) + ' patients. ' \
+       + str(len(to_process)) + ' left to process')
+
+    # Several python scripts can run in parallel. We will make shuffled batches
+    # of 100 patients until finalized.
+    shuffle(to_process)
+    if len(to_process) > 100: return to_process[0:100]
+    else: return to_process
 
 
 def segment_all_ct_scans(path, image): # Iterate through all folders
-	# Take all folders, forget about the ones already segmented
-	all_folders = os.listdir(path)
-	all_pickles = [p.split('.')[0] \
-				for p in os.listdir(OUTPUT_DIRECTORY) if p.endswith('.pickle')]
-	folders_to_segment = [f for f in all_folders if f not in all_pickles]
-	print('Found ' + str(len(all_folders)) + ' folders. Segmenting ' \
-	   + str(len(folders_to_segment)) + '...')
-	
-	for folder in folders_to_segment:
-		i_start_time = time.time()
-		# If pickle already exist, skip to the next folder
-		if os.path.isfile(OUTPUT_DIRECTORY + folder + '.pickle'):
-			print(folder + ' already segmented. Skipping...')
-			continue
-	
-		# Segment
-		print('Segmenting ' + folder + '...')
-		try:
-			ct_scan = read_ct_scan(path + folder + '/') 
-			segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
-		
-			# If true, save image as .png with input image and binary mask superimposed
-			if image:
-				plot_ct_scan(segmented_ct_scan)
-				plt.savefig(OUTPUT_DIRECTORY + folder + '.png', format='png')
-				plt.close()
-			
-			# Save object as a .pickle
-			with open(OUTPUT_DIRECTORY + folder + ".pickle", 'wb') as handle:
-				pickle.dump(segmented_ct_scan, handle, protocol=2)
-			
-			# Print and time to finish
-			i_time = time.time() - i_start_time
-			print('Successfully created in ' + \
-				str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
-		
-		except ValueError:
-			print(folder + ' folder rised a ValueError! Continuing...')
-		except IndexError:
-			print(folder + ' folder rised an IndexError! Continuing...')
+    patients = [] # Initialize lenght of previus batch to not iterate through errors
+    while True:
+        patients, len_prev_batch = batch_to_process(path), len(patients)
+        if len(patients) == 0 or len(patients) == len_prev_batch: break
 
-# Turn to False to not save a image with slices and binary mask superimposed
-segment_all_ct_scans(INPUT_DIRECTORY, True)
+        for patient in patients: # patient has .pickle extension
+            i_start_time = time.time()
+            # If pickle already exist, skip to the next patient
+            if os.path.isfile(D['OUTPUT_DIRECTORY'] + patient):
+                print(patient + ' already segmented. Skipping...')
+                continue
+
+            # Load pickle with resized ct_scan
+            with open(path + patient, 'rb') as handle:
+                ct_scan = pickle.load(handle)
+
+            # Segment
+            print('Segmenting ' + patient + '...')
+            try:
+                segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
+
+                # If true, save image as .png with input image and binary mask superimposed
+                if image:
+                    plot_ct_scan(segmented_ct_scan)
+                    # patient has .pickle extension, we will remove it to save .png
+                    plt.savefig(D['OUTPUT_DIRECTORY'] + \
+                                patient.rsplit('.',1)[0] + '.png', format='png')
+                    plt.close()
+
+                # Save object as a .pickle
+                with open(D['OUTPUT_DIRECTORY'] + patient, 'wb') as handle:
+                    pickle.dump(segmented_ct_scan, handle, protocol=2)
+
+                # Print and time to finish
+                i_time = time.time() - i_start_time
+                print('Done in ' + \
+                      str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
+
+            except ValueError:
+                print(patient + ' patient rised a ValueError! Continuing...')
+            except IndexError:
+                print(patient + ' patient rised an IndexError! Continuing...')
+
+# Turn to False to not save an image with slices and binary mask superimposed
+segment_all_ct_scans(D['INPUT_DIRECTORY'], True)
 
 print("Total elapsed time: " + \
-	  str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))
+      str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
