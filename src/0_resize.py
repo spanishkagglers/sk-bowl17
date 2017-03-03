@@ -133,7 +133,7 @@ def resize_all_ct_scans(path): # Iterate through all patients
 
                 # Resize pixel spacing to a certain isotrpic resolution
                 resized_a, new_spacing = \
-                resize(ct_scan, original_scan, resize_dashboarD['NEW_SPACING'])
+                resize(ct_scan, original_scan, D['NEW_SPACING'])
 
                 print('Shape before:', ct_scan.shape, '-', 'After:', resized_a.shape)
 
