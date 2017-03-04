@@ -120,9 +120,14 @@ if __name__ == "__main__":
 
     START_TIME = time.time()
 
+    """
     for subfolder in D0['SUBFOLDERS']:
         save_LUNA_origins(subfolder)
         resize_save_LUNA_imgs(subfolder)
-
+    """
+    subfolder = "subset2"
+    save_LUNA_origins(subfolder)
+    resize_save_LUNA_imgs(subfolder)
+    
     print("Total elapsed time: " + \
           str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
