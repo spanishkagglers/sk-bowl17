@@ -75,7 +75,7 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
+file_list=glob(d['INPUT_DIRECTORY_1']+"info_*.pickle")
 
 for input_filename in tqdm(file_list):
     ct_scan_id = os.path.splitext(os.path.basename(input_filename))[0]

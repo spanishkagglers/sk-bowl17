@@ -39,7 +39,7 @@ start_time = time.time()
 #if not os.path.exists(d['OUTPUT_DIRECTORY']):
 #    os.makedirs(d['OUTPUT_DIRECTORY'])
 
-file_list=glob(d['INPUT_DIRECTORY']+"*.pickle")
+file_list=glob(d['INPUT_DIRECTORY']+"info_*.pickle")
 
 
 nodules_info=[]

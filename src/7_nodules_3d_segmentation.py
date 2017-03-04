@@ -43,9 +43,14 @@ if not os.path.exists(d['OUTPUT_DIRECTORY']):
     os.makedirs(d['OUTPUT_DIRECTORY'])
 
 
+def get_output_filenames(ct_scan_id):
+    info_output_filename=d['OUTPUT_DIRECTORY'] + "info_" + ct_scan_id + ".pickle"
+    points_output_filename=d['OUTPUT_DIRECTORY'] + "points_" + ct_scan_id + ".pickle"
+    
+    return info_output_filename, points_output_filename
 
-def nodule_segmentation(ct_scan_id, output_filename, d):
-
+def nodule_segmentation(ct_scan_id, d):
+    
     with open(d['INPUT_DIRECTORY'] + ct_scan_id + '.pickle', 'rb') as handle:
         segmented_ct_scan = pickle.load(handle)
         
@@ -62,7 +67,6 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         X[i][1] = information_points[1][i]
         X[i][2] = information_points[2][i]
     
-    Y=X
     ###########################################
     
     # DBSCAN
@@ -103,6 +107,7 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
     
+    clusters_dict={}
     nodules=[]
     unique_labels = set(labels)
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
@@ -118,9 +123,6 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         cluster_z=z[class_member_mask]
         cluster=np.vstack((cluster_x, cluster_y, cluster_z)).T
         
-        img=np.zeros(shape=segmented_ct_scan.shape, dtype=np.uint8)
-        for i in range(len(cluster_x)):
-            img[cluster_z[i]][cluster_y[i]][cluster_x[i]] = 255
         
         
         center=np.array((int(round(np.mean(cluster_x))), 
@@ -143,10 +145,11 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
             #print(k)
             
         
-        center[2]=center[2]    
+        num_points  =cluster_x.shape[0]
+        id_nodule_str=ct_scan_id+"_"+str(id_nodule)
         nodules.append({
             'ct_scan_id':ct_scan_id,
-            'id_nodule':ct_scan_id+"_"+str(id_nodule),
+            'id_nodule':id_nodule_str,
             'center':center,
             'radius':radius,
             'min_x': min(cluster_x),
@@ -155,7 +158,15 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
             'max_x': max(cluster_x),
             'max_y': max(cluster_y),
             'max_z': max(cluster_z),
+            'num_points': num_points,
         })
+        
+        cluster_dict={
+            'x':cluster_x, 
+            'y':cluster_y, 
+            'z':cluster_z
+        }
+        clusters_dict[id_nodule_str]=cluster_dict
         
         id_nodule+=1
         
@@ -166,19 +177,26 @@ def nodule_segmentation(ct_scan_id, output_filename, d):
         
     #print(len(unique_labels))
     
-    with open(output_filename, 'wb') as handle:
+    info_output_filename, points_output_filename = get_output_filenames(ct_scan_id)
+    
+    with open(info_output_filename, 'wb') as handle:
         pickle.dump(nodules, handle, protocol=PICKLE_PROTOCOL)
+    
+    with open(points_output_filename, 'wb') as handle:
+        pickle.dump(clusters_dict, handle, protocol=PICKLE_PROTOCOL)
+    
         
 
 file_list=glob(d['INPUT_DIRECTORY']+"*.pickle")
 for input_filename in tqdm(file_list):
     ct_scan_id = os.path.splitext(os.path.basename(input_filename))[0]
-    output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
-    if os.path.isfile(output_filename):
+    
+    info_output_filename, points_output_filename = get_output_filenames(ct_scan_id)
+    if os.path.isfile(info_output_filename) and os.path.isfile(points_output_filename):
         #print('Skipping...'+ct_scan_id)
         pass
     else:
-        nodule_segmentation(ct_scan_id, output_filename, d)  
+        nodule_segmentation(ct_scan_id, d)  
 
         
         
