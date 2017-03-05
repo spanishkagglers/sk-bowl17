@@ -17,8 +17,6 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'sample_images/' # 20 patients
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
-AWS = True # Turn True to upload to S3
-
 import pickle
 PICKLE_PROTOCOL=2 #pickle.HIGHEST_PROTOCOL
 
@@ -207,6 +205,7 @@ features_extraction_nodules_3d={
 #
 #
 
+AWS = False # To upload results to AWS S3 bucket
 BUCKET = 'kaggle-adri' # $0.023/GB per month
 
 from random import shuffle
