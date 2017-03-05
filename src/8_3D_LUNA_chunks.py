@@ -20,7 +20,7 @@ def load_LUNA_resized_image(IMG_PATH):
     return resized_scan
 
 # Saves all ann(_ex) chunks from LUNA images in IMG_FOLDER
-def save_LUNA_chunks(subfolder, prefix="ann"):
+def save_LUNA_chunks(subfolder):
 
     ORIGIN_OF_IMAGES_FILE = D8['ORIGIN_OF_IMAGES_FILE']
     if not os.path.isfile(ORIGIN_OF_IMAGES_FILE):
@@ -34,15 +34,13 @@ def save_LUNA_chunks(subfolder, prefix="ann"):
         print("No resized images input subfolder", input_subfolder)
         exit(0)
 
-    if prefix=="ann":
-        ANNOTS_FILE = D8["ANN_CSV_FILE"]
-        OUTPUT_DIRECTORY = D8["OUTPUT_ANN_IMG_DIR"]
-    elif prefix=="ann_ex":
-        ANNOTS_FILE = D8["ANN_EX_CSV_FILE"]
-        OUTPUT_DIRECTORY = D8["OUTPUT_ANN_EX_IMG_DIR"]
-    else:
-        print("Prefix must be ann or ann_ex, but is", prefix)
+    prefix = D8['PREFIX']
+    if prefix not in ["ANN", "ANN_EX"]:
+        print("LUNA Prefix must be ANN or ANN_EX, but is", prefix)
         exit(0)
+
+    ANNOTS_FILE = D8["ANN_CSV_FILE"]
+    OUTPUT_DIRECTORY = D8["OUTPUT_ANN_IMG_DIR"]
 
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
@@ -73,7 +71,7 @@ def save_LUNA_chunks(subfolder, prefix="ann"):
                     numpySpacing = [1, 1, 1]
 
                     voxel_ann_center = worldToVoxelCoord(world_ann_center, numpyOrigin, numpySpacing)
-                    print(world_ann_center, voxel_ann_center)
+                    # print(world_ann_center, voxel_ann_center)
                     chunk = get_chunk(numpyImage, voxel_ann_center, chunk_dims, show_chunk_out=True, chunk_id=index)
 
                     if PLOT_ANN:
@@ -97,8 +95,8 @@ if __name__ == "__main__":
     START_TIME = time.time()
 
     for subfolder in D8['SUBFOLDERS']:
-        save_LUNA_chunks(subfolder, prefix="ann") # ann -> annotations, ann_ex -> annotations excluded
-        # save_LUNA_chunks(subfolder, prefix="ann_ex") # ann -> annotations, ann_ex -> annotations excluded
+        print("processing subfolder", subfolder)
+        save_LUNA_chunks(subfolder)
 
     print("Total elapsed time: " + \
           str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
