@@ -15,8 +15,8 @@ import pickle
 from collections import Counter
 from sklearn.cluster import DBSCAN  
 #import cv2
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from scipy.spatial.distance import *
+from util.plot_3d import * # It turns AWS variable False...
 
 import time
 start_time = time.time()
@@ -26,7 +26,14 @@ sys.path.append("../")
 from competition_config import *
 d=nodules_3d_segmentation
 
-from scipy.spatial.distance import *
+if AWS:
+    import boto3
+    s3 = boto3.client('s3')
+    from matplotlib import use as pltuse
+    pltuse('Agg') # Avoid no display name and environment variable error on AWS
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 try:
     from tqdm import tqdm
@@ -37,11 +44,9 @@ except:
 import time
 start_time = time.time()
 
-from util.plot_3d import *
 
 if not os.path.exists(d['OUTPUT_DIRECTORY']):
     os.makedirs(d['OUTPUT_DIRECTORY'])
-
 
 def get_output_filenames(ct_scan_id):
     info_output_filename=d['OUTPUT_DIRECTORY'] + "info_" + ct_scan_id + ".pickle"
@@ -176,14 +181,21 @@ def nodule_segmentation(ct_scan_id, d):
         plt.show()
         
     #print(len(unique_labels))
-    
     info_output_filename, points_output_filename = get_output_filenames(ct_scan_id)
-    
     with open(info_output_filename, 'wb') as handle:
         pickle.dump(nodules, handle, protocol=PICKLE_PROTOCOL)
-    
+        if AWS:
+            print('Uploading to S3', info_output_filename)
+            # Bucket upload to the OUTPUT_DIRECTORY without '../'
+            s3.upload_file(info_output_filename, \
+                           BUCKET, info_output_filename[3:])
     with open(points_output_filename, 'wb') as handle:
         pickle.dump(clusters_dict, handle, protocol=PICKLE_PROTOCOL)
+        if AWS:
+            print('Uploading to S3', points_output_filename)
+            # Bucket upload to the OUTPUT_DIRECTORY without '../'
+            s3.upload_file(points_output_filename, \
+                           BUCKET, points_output_filename[3:])
     
         
 
