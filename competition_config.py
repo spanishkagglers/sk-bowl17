@@ -176,7 +176,7 @@ if LUNA_PREFIX == "ANN":
 else:
     LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations_excluded.csv"
 
-LUNA_ANN = LUNA_ROOT + PREFIX + str(CHUNK_SIDE) + "/"
+LUNA_ANN = LUNA_ROOT + LUNA_PREFIX + str(CHUNK_SIDE) + "/"
 
 chunks_extraction={
     'LUNA_ROOT' : LUNA_ROOT,
