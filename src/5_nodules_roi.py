@@ -63,89 +63,99 @@ def plot_3d(image, threshold=-300):
     
 
 def get_nodules(segmented_ct_scan):
-	
-	segmented_ct_scan[segmented_ct_scan < 604] = 0
-	#plot_ct_scan(segmented_ct_scan)
-	#plot_3d(segmented_ct_scan, 604)
+    
+    segmented_ct_scan[segmented_ct_scan < 604] = 0
+    #plot_ct_scan(segmented_ct_scan)
+    #plot_3d(segmented_ct_scan, 604)
 
-	# After filtering, there are still lot of noise because of blood vessels.
-	# Thus we further remove the two largest connected component.
+    # After filtering, there are still lot of noise because of blood vessels.
+    # Thus we further remove the two largest connected component.
 
-	selem = ball(d['BALL_RADIUS'])
-	binary = binary_closing(segmented_ct_scan, selem)
+    selem = ball(d['BALL_RADIUS'])
+    binary = binary_closing(segmented_ct_scan, selem)
 
-	label_scan = label(binary)
+    label_scan = label(binary)
 
-	areas = [r.area for r in regionprops(label_scan)]
-	areas.sort()
+    areas = [r.area for r in regionprops(label_scan)]
+    areas.sort()
 
-	for r in regionprops(label_scan):
-	    max_x, max_y, max_z = 0, 0, 0
-	    min_x, min_y, min_z = 1000, 1000, 1000
-	    
-	    for c in r.coords:
-	        max_z = max(c[0], max_z)
-	        max_y = max(c[1], max_y)
-	        max_x = max(c[2], max_x)
-	        
-	        min_z = min(c[0], min_z)
-	        min_y = min(c[1], min_y)
-	        min_x = min(c[2], min_x)
-	    if (min_z == max_z or min_y == max_y or min_x == max_x or r.area > areas[-3]):
-	        for c in r.coords:
-	            segmented_ct_scan[c[0], c[1], c[2]] = 0
-	    else:
-	        index = (max((max_x - min_x), (max_y - min_y), (max_z - min_z))) / \
-				 (min((max_x - min_x), (max_y - min_y) , (max_z - min_z)))
-	
-	'''Comment from ArnavJain on Kaggle about index: 
-	Index is the shape index of the 3D blob. As mentioned in the TODOs, 
-	I am working on reducing the generated candidates using shape index 
-	and other properties. So, index is one such property.
-	I will post the whole part as soon as I complete it.'''
-			
-	return segmented_ct_scan
+    for r in regionprops(label_scan):
+        max_x, max_y, max_z = 0, 0, 0
+        min_x, min_y, min_z = 1000, 1000, 1000
+        
+        for c in r.coords:
+            max_z = max(c[0], max_z)
+            max_y = max(c[1], max_y)
+            max_x = max(c[2], max_x)
+            
+            min_z = min(c[0], min_z)
+            min_y = min(c[1], min_y)
+            min_x = min(c[2], min_x)
+        if (min_z == max_z or min_y == max_y or min_x == max_x or r.area > areas[-3]):
+            for c in r.coords:
+                segmented_ct_scan[c[0], c[1], c[2]] = 0
+        else:
+            index = (max((max_x - min_x), (max_y - min_y), (max_z - min_z))) / \
+                 (min((max_x - min_x), (max_y - min_y) , (max_z - min_z)))
+    
+    '''Comment from ArnavJain on Kaggle about index: 
+    Index is the shape index of the 3D blob. As mentioned in the TODOs, 
+    I am working on reducing the generated candidates using shape index 
+    and other properties. So, index is one such property.
+    I will post the whole part as soon as I complete it.'''
+            
+    return segmented_ct_scan
 
-		
-def get_nodules_all_segmented_ct_scans(path, image): # Iterate through all pickles
-	
-	# Read all segmented lungs pickles, ignore other extension files (like images)
-	all_pickles = [p.split('.')[0] for p in os.listdir(path) if p.endswith('.pickle')]
-	print('Found ' + str(len(all_pickles)) + ' segmented lungs. Getting nodules...')
-	
-	i = 0
-	for segmented_lung in all_pickles:
-		i += 1
-		i_start_time = time.time()
-		# If pickle already exist, skip to the next folder
-		if os.path.isfile(OUTPUT_DIRECTORY + segmented_lung + '.pickle'):
-			print(segmented_lung + ' already segmented. Skipping...')
-			continue
-		# Load pickle with segmented_ct_scan
-		with open(path + segmented_lung + '.pickle', 'rb') as handle:
-			segmented_ct_scan = pickle.load(handle)
-		
-		# Get nodules
-		segmented_nodules_ct_scan = get_nodules(segmented_ct_scan)
-		
-		# If true, save image as .png of 3D plotted segmented nodules
-		if image:
-			plot_3d(segmented_nodules_ct_scan, 604)
-			plt.savefig(OUTPUT_DIRECTORY + segmented_lung + '.png', format='png')
-			plt.close()
-		
-		# Save object as a .pickle
-		with open(OUTPUT_DIRECTORY + segmented_lung + ".pickle", 'wb') as handle:
-			pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)	
-		
-		# Print and time to finish
-		time_finish = round(time.time() - i_start_time) * (len(all_pickles) - i)
-		print(segmented_lung + 'nodules segmentation created. About ' + \
-			str(time.strftime('%H:%M:%S', time.gmtime(time_finish))) + \
-			' left.')
+        
+def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterate through all pickles
+    # Initialize lenght of previus batch to not iterate through errors
+    patients = []
+    while True:
+        # batch_to_process function from competition_config
+        patients, len_prev_batch = batch_to_process(input_path, output_path), len(patients)
+        if len(patients) == 0 or len(patients) == len_prev_batch:
+            break
+
+        for patient in patients: # patient has .pickle extension
+            i_start_time = time.time()
+            # If pickle already exist, skip to the next patient
+            if os.path.isfile(output_path + patient):
+                print(patient + ' already processed. Skipping...')
+                continue
+
+            # Load pickle with segmented_ct_scan
+            with open(input_path + patient, 'rb') as handle:
+                segmented_ct_scan = pickle.load(handle)
+
+            # Get nodules
+            print('Getting nodules from' + patient + '...')
+            try:
+                segmented_nodules_ct_scan = get_nodules(segmented_ct_scan)
+
+                # If true, save image as .png of 3D plotted segmented nodules
+                if image:
+                    plot_3d(segmented_nodules_ct_scan, 604)
+                    # patient has .pickle extension, we will remove it to save .png
+                    plt.savefig(output_path + \
+                                patient.rsplit('.', 1)[0] + '.png', format='png')
+                    plt.close()
+
+                # Save object as a .pickle
+                with open(output_path + patient, 'wb') as handle:
+                    pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)    
+
+                # Print and time to finish
+                i_time = time.time() - i_start_time
+                print('Done in ' + \
+                      str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
+
+            except ValueError:
+                print(patient + ' patient rised a ValueError! Continuing...')
+            except IndexError:
+                print(patient + ' patient rised an IndexError! Continuing...')
 
 # Turn to True to save a 3D segmented nodule image
-get_nodules_all_segmented_ct_scans(INPUT_DIRECTORY, False)
+get_nodules_all_segmented_ct_scans(INPUT_DIRECTORY, OUTPUT_DIRECTORY, False)
 
 print("Total elapsed time: " + \
-	  str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))
+      str(time.strftime('%H:%M:%S', time.gmtime((time.time() - start_time)))))

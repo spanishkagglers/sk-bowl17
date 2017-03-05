@@ -32,7 +32,7 @@ global resize_dashboard
 
 resize_dashboard={
     'INPUT_DIRECTORY' : COMPETITION_DATASET_DIRECTORY,
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/0_resize/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/0_resize_dicoms/',
     'NEW_SPACING': [1, 1, 1],
 }
 
@@ -96,7 +96,7 @@ global best_lug_roi_selector_dashboard
 best_lug_roi_selector_dashboard={
     'INPUT_DIRECTORY_1' : arnavs_lugns_roi_dashboard['OUTPUT_DIRECTORY'],
     'INPUT_DIRECTORY_2' : watershed_lugns_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/3_Best_Lung_ROI_selector/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/3_best_lung_roi_selector/',
 }
 
 ####################### 4 - Inverted Lung Detector
@@ -108,7 +108,7 @@ global inverted_lung_detector_dashboard
 
 inverted_lung_detector_dashboard={
     'INPUT_DIRECTORY' : best_lug_roi_selector_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/4_Inverted_Lung_Detector/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/4_inverted_lung_detector/',
 }
 
 
@@ -122,7 +122,7 @@ global nodules_roi_dashboard
 nodules_roi_dashboard={
     #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
     'INPUT_DIRECTORY' : arnavs_lugns_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/5_Nodules_ROI/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/5_nodules_roi/',
     'BALL_RADIUS':  2,
 }
 
@@ -136,7 +136,7 @@ global nodules_3d_segmentation_luna
 nodules_3d_segmentation_luna={
     #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
     'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_Nodules_3D_segmentation_LUNA"016/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_nodules_3D_segmentation_LUNA"016/',
 }
 
 ####################### 7 - Nodules 3D segmentation
@@ -149,7 +149,7 @@ global nodules_3d_segmentation
 nodules_3d_segmentation={
     #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
     'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/7_Nodules_3D_segmentation/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/7_nodules_3D_segmentation/',
     'PRINT_IMAGES': False,
 }
 
@@ -203,3 +203,29 @@ features_extraction_nodules_3d={
 }
 
 
+####################### Extras and Cloud
+#
+#
+
+from random import shuffle
+import os
+
+# Get what patients are left to process, pick randomnly a batch
+BATCH_SIZE = 50
+
+def batch_to_process(input_path, output_path):
+    # Take all files/folders to process, forget about the ones already processed
+    patients = os.listdir(input_path)
+    processed = [p.split('.')[0] \
+                for p in os.listdir(output_path) if p.endswith('.pickle')]
+    to_process = [f for f in patients if f not in processed]
+    print('There are ' + str(len(patients)) + ' patients. ' \
+       + str(len(to_process)) + ' left to process')
+
+    # Several python scripts can run in parallel. We will make shuffled batches
+    # of 100 patients until finalized.
+    shuffle(to_process)
+    if len(to_process) > BATCH_SIZE:
+        return to_process[0:BATCH_SIZE]
+    else:
+        return to_process

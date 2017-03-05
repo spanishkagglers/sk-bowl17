@@ -128,41 +128,24 @@ def segment_lung_from_ct_scan(ct_scan):
     return np.asarray([get_segmented_lungs(slice) for slice in ct_scan])
 
 
-def batch_to_process(path):
-    # Take all files/folders to process, forget about the ones already processed
-    patients = os.listdir(path)
-    processed = [p.split('.')[0] \
-                for p in os.listdir(D['OUTPUT_DIRECTORY']) if p.endswith('.pickle')]
-    to_process = [f for f in patients if f not in processed]
-    print('There are ' + str(len(patients)) + ' patients. ' \
-       + str(len(to_process)) + ' left to process')
-
-    # Several python scripts can run in parallel. We will make shuffled batches
-    # of 100 patients until finalized.
-    shuffle(to_process)
-    if len(to_process) > 100:
-        return to_process[0:100]
-    else:
-        return to_process
-
-
-def segment_all_ct_scans(path, image): # Iterate through all folders
+def segment_all_ct_scans(input_path, output_path, image): # Iterate through all pickles
     # Initialize lenght of previus batch to not iterate through errors
     patients = []
     while True:
-        patients, len_prev_batch = batch_to_process(path), len(patients)
+        # batch_to_process function from competition_config
+        patients, len_prev_batch = batch_to_process(input_path, output_path), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 
         for patient in patients: # patient has .pickle extension
             i_start_time = time.time()
             # If pickle already exist, skip to the next patient
-            if os.path.isfile(D['OUTPUT_DIRECTORY'] + patient):
-                print(patient + ' already segmented. Skipping...')
+            if os.path.isfile(output_path + patient):
+                print(patient + ' already processed. Skipping...')
                 continue
 
             # Load pickle with resized ct_scan
-            with open(path + patient, 'rb') as handle:
+            with open(input_path + patient, 'rb') as handle:
                 ct_scan = pickle.load(handle)
 
             # Segment
@@ -174,12 +157,12 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
                 if image:
                     plot_ct_scan(segmented_ct_scan)
                     # patient has .pickle extension, we will remove it to save .png
-                    plt.savefig(D['OUTPUT_DIRECTORY'] + \
+                    plt.savefig(output_path + \
                                 patient.rsplit('.', 1)[0] + '.png', format='png')
                     plt.close()
 
                 # Save object as a .pickle
-                with open(D['OUTPUT_DIRECTORY'] + patient, 'wb') as handle:
+                with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_ct_scan, handle, protocol=PICKLE_PROTOCOL)
 
                 # Print and time to finish
@@ -193,7 +176,7 @@ def segment_all_ct_scans(path, image): # Iterate through all folders
                 print(patient + ' patient rised an IndexError! Continuing...')
 
 # Turn to False to not save an image with slices and binary mask superimposed
-segment_all_ct_scans(D['INPUT_DIRECTORY'], True)
+segment_all_ct_scans(D['INPUT_DIRECTORY'], D['OUTPUT_DIRECTORY'], True)
 
 print("Total elapsed time: " + \
       str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
