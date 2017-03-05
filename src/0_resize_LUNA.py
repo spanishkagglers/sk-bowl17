@@ -125,7 +125,7 @@ if __name__ == "__main__":
         save_LUNA_origins(subfolder)
         resize_save_LUNA_imgs(subfolder)
     """
-    subfolder = "subset0"
+    subfolder = "subset0/"
     save_LUNA_origins(subfolder)
     resize_save_LUNA_imgs(subfolder)
     
