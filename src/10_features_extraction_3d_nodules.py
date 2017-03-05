@@ -138,11 +138,10 @@ for input_filename in tqdm(file_list):
             
             roiGC_to_noduleGC_vector = nodule_geo_center-roi_geo_center
             
+            # coordenadas de 100 puntos de una esfera radio=radius/2
+            # z2i,y2i,x2i = np.round(sphGrid2cartGrid(10,nodule_mass_radius/2,nodule_geo_center[0],nodule_geo_center[1],nodule_geo_center[2]),0)
+            # nod_coords = np.concatenate(([nod_coords_dict['z']],[nod_coords_dict['y']],[nod_coords_dict['x']]),axis=0).T
 
-            z2i,y2i,x2i = np.round(sphGrid2cartGrid(10,nodule_mass_radius/2,0,0,0),0)
-            #cont = 0
-            #for i in range(len(z2i)):
-            #    if()
             
             '''
             from matplotlib import pyplot as plt
