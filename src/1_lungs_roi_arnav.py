@@ -140,7 +140,7 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
     while True:
         # batch_to_process function from competition_config
         patients, len_prev_batch = \
-        batch_to_process(input_path, output_path, AWS, True), len(patients)
+        batch_to_process(input_path, output_path, True), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 
@@ -151,17 +151,13 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
                 print(patient + ' already processed. Skipping...')
                 continue
 
+            # Load pickle with resized ct_scan
+            with open(input_path + patient, 'rb') as handle:
+                ct_scan = pickle.load(handle)
+
             # Segment
             print('Segmenting ' + patient + '...')
             try:
-                if AWS:
-                    # Bucket download to the INPUT_DIRECTORY without '../'
-                    s3.download_file(BUCKET, input_path[3:] + patient, \
-                                     input_path + patient)
-                # Load pickle with resized ct_scan
-                with open(input_path + patient, 'rb') as handle:
-                    ct_scan = pickle.load(handle)
-                
                 segmented_ct_scan = segment_lung_from_ct_scan(ct_scan)
 
                 # If true, save image as .png with input image and binary mask superimposed
@@ -174,9 +170,7 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
                         print('Uploading to S3', patient_img)
                         # Bucket upload to the OUTPUT_DIRECTORY without '../'
                         s3.upload_file(output_path + patient_img, \
-                                       BUCKET, output_path[3:] + patient_img)
-                        # Delete file to keep hard drive clean and ephemeral
-                        os.remove(output_path + patient_img)
+                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
@@ -186,9 +180,7 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
                         print('Uploading to S3', patient)
                         # Bucket upload to the OUTPUT_DIRECTORY without '../'
                         s3.upload_file(output_path + patient, \
-                                       BUCKET, output_path[3:] + patient)
-                        # Delete file to keep hard drive clean and ephemeral
-                        os.remove(output_path + patient)
+                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time
