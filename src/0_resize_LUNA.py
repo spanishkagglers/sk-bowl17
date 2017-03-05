@@ -59,11 +59,13 @@ def tmpLUNAfiles(folder):
 def save_LUNA_origins(subfolder):
     ORIGIN_OF_IMAGES_FILE = D0['ORIGIN_OF_IMAGES_FILE']
     if not os.path.isfile(ORIGIN_OF_IMAGES_FILE):
-        print("Image Origin csv not found. Creating", ORIGIN_OF_IMAGES_FILE)
+        print("Origin of Images csv not found. Creating", ORIGIN_OF_IMAGES_FILE)
         origin_of_images = pd.DataFrame(columns=('seriesuid', 'origin_z', 'origin_y', 'origin_x'))
     else:
-        print("Opening Image Origin csv", ORIGIN_OF_IMAGES_FILE)
+        print("Opening Origin of Images csv", ORIGIN_OF_IMAGES_FILE)
         origin_of_images = pd.read_csv(ORIGIN_OF_IMAGES_FILE)
+
+    print("Opened Origin of Images csv")
 
     if not os.path.exists(D0["INPUT_DIRECTORY"]):
         print("LUNA images ROOT directory not found", D0["INPUT_DIRECTORY"])
@@ -77,8 +79,9 @@ def save_LUNA_origins(subfolder):
     LUNAfiles = tmpLUNAfiles(input_subfolder)
     for img_file in LUNAfiles:
         if img_file[:-4] not in origin_of_images['seriesuid'].values:
-            # print("Origin of", img_file)
+            print("Reading image and origin", img_file)
             itkimage = sitk.ReadImage(input_subfolder + img_file)
+            print("Already read image", input_subfolder + img_file)
             #numpyOrigin = np.array([new_row, new_row+1, new_row+2])
             numpyOrigin = np.array(list(reversed(itkimage.GetOrigin())))
             new_row = origin_of_images.shape[0]+1
@@ -87,6 +90,7 @@ def save_LUNA_origins(subfolder):
 
     # index=True by default, which inserts a semicolon (,) at the beginning of the columns names
     origin_of_images.to_csv(ORIGIN_OF_IMAGES_FILE, index=False)
+    print("Updated Origin of Images")
 
 def resize_save_LUNA_imgs(subfolder):
 
@@ -96,11 +100,13 @@ def resize_save_LUNA_imgs(subfolder):
     if not os.path.exists(output_subfolder):
         os.makedirs(output_subfolder)
 
+    resized_images = 0
     LUNAfiles = tmpLUNAfiles(input_subfolder)
     for img_file in LUNAfiles:
         LUNApickle = img_file[:-4]+ ".pickle"
         if not os.path.isfile(output_subfolder + LUNApickle):
-            print("Resizing", img_file)
+            resized_images +=1
+            print("Resizing", resized_images, img_file)
             numpyImage, numpyOrigin, numpySpacing = load_itk_image(input_subfolder + img_file,
                          resizeCT=True, filterBound=True, transform2realHU=True, correct_inv=True)
             with open(output_subfolder + LUNApickle , 'wb') as handle:
