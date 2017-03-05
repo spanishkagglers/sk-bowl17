@@ -19,6 +19,7 @@ from skimage.filters import roberts
 from skimage.segmentation import clear_border
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
+from matplotlib import use as pltuse
 
 import sys
 sys.path.append("../")
@@ -29,6 +30,7 @@ D1 = arnavs_lugns_roi_dashboard
 if AWS:
     import boto3
     s3 = boto3.client('s3')
+    pltuse('Agg') # Avoid no display name and no $DISPLAY environment variable error
 
 START_TIME = time.time()
 
