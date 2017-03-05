@@ -5,19 +5,12 @@ Created on Sat Feb 25 18:02:42 2017
 @author: javier
 """
 
-import pandas as pd
-import numpy as np # linear algebra
+import numpy as np
 import os
 from glob import glob
+import csv
 
-import scipy.misc
 import pickle
-
-from collections import Counter
-from sklearn.cluster import DBSCAN  
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 import time
 start_time = time.time()
@@ -26,9 +19,6 @@ import sys
 sys.path.append("../")
 from competition_config import *
 d=features_extraction_nodules_3d
-
-
-from scipy.spatial.distance import *
 
 from scipy import stats
 
@@ -106,6 +96,16 @@ def sphGrid2cartGrid(n,r,zc,yc,xc):
     z = z + zc
     return z, y, x
 
+
+def WriteDictToCSV(csv_file,csv_columns,dict_data):
+
+    with open(csv_file, 'w') as csvfile:
+        #writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+        writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n', fieldnames=csv_columns)
+        writer.writeheader()
+        for data in dict_data:
+            writer.writerow(data)
+    return     
 
 
 file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
@@ -211,6 +211,10 @@ for input_filename in tqdm(file_list):
         with open(output_filename, 'wb') as handle:
             output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
             pickle.dump(features, handle, protocol=PICKLE_PROTOCOL)
+        
+        csv_columns=sorted(list(features[0].keys()))
+        csv_file = d['OUTPUT_DIRECTORY'] + ct_scan_id + ".csv"
+        WriteDictToCSV(csv_file,csv_columns,features)
             
         
 print("Ellapsed time: {} seconds".format((time.time() - start_time)))
