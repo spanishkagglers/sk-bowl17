@@ -3,7 +3,7 @@
 """
 Created on Fri Mar  3 00:59:56 2017
 
-@author: adrianmelic
+@author: spanish kagglers
 """
 # Based on:
 # https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
@@ -20,9 +20,9 @@ import sys
 sys.path.append("../")
 # Import our competition variables
 from competition_config import *
-D = resize_dashboard
-if not os.path.exists(D['OUTPUT_DIRECTORY']):
-    os.makedirs(D['OUTPUT_DIRECTORY'])
+D0 = resize_dashboard
+if not os.path.exists(D0['OUTPUT_DIRECTORY']):
+    os.makedirs(D0['OUTPUT_DIRECTORY'])
 
 START_TIME = time.time()
 
@@ -77,7 +77,7 @@ def read_ct_scan(folder_name):
 
 def resize(ct_scan, original_scan, new_spacing=[1, 1, 1]):
     # Determine current pixel spacing
-    spacing = np.array([original_scan[0].SliceThickness] + \
+    spacing = np.array([abs(original_scan[0].SliceThickness)] + \
                        original_scan[0].PixelSpacing, dtype=np.float32)
 
     resize_factor = spacing / new_spacing
@@ -116,7 +116,7 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
 
                 # Resize pixel spacing to a certain isotrpic resolution
                 resized_a, new_spacing = \
-                resize(ct_scan, original_scan, D['NEW_SPACING'])
+                resize(ct_scan, original_scan, D0['NEW_SPACING'])
 
                 print('Shape before:', ct_scan.shape, '-', 'After:', resized_a.shape)
 
@@ -134,7 +134,7 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
             except IndexError:
                 print(patient + ' patient rised an IndexError! Continuing...')
 
-resize_all_ct_scans(D['INPUT_DIRECTORY'], D['OUTPUT_DIRECTORY'])
+resize_all_ct_scans(D0['INPUT_DIRECTORY'], D0['OUTPUT_DIRECTORY'])
 
 print("Total elapsed time: " + \
       str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
