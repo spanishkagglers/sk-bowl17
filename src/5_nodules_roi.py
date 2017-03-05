@@ -119,7 +119,8 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
     patients = []
     while True:
         # batch_to_process function from competition_config
-        patients, len_prev_batch = batch_to_process(input_path, output_path), len(patients)
+        patients, len_prev_batch = \
+        batch_to_process(input_path, output_path, True), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 

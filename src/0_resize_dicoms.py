@@ -104,7 +104,7 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
         # batch_to_process function from competition_config
         # it returns a *.pickle list, we will remove the extension this time
         patients, len_prev_batch = \
-        [b.split('.')[0] for b in batch_to_process(input_path, output_path)], len(patients)
+        batch_to_process(input_path, output_path, False), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 

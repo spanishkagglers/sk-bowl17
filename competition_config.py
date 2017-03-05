@@ -18,7 +18,7 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
 import pickle
-PICKLE_PROTOCOL=2 #pickle.HIGHEST_PROTOCOL
+PICKLE_PROTOCOL = 2 #pickle.HIGHEST_PROTOCOL
 
 ####################### 0 - RESIZE DICOMS
 #
@@ -214,15 +214,23 @@ import os
 # Get what patients are left to process, pick randomnly a batch
 BATCH_SIZE = 50
 
-def batch_to_process(input_path, output_path):
+def batch_to_process(input_path, output_path, both_pickles):
     # Take all files/folders to process, forget about the ones already processed
-    patients = [p.split('.')[0] for p in os.listdir(input_path)]
-    processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
-    to_process = [f+'.pickle' for f in patients if f not in processed]
+    # If both folders have pickles. Forget images and other files
+    if both_pickles:
+        patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
+        processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
+    # Else, it's the folders with dicoms
+    else:
+        patients = os.listdir(input_path)
+        processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
+    
+    to_process = [f for f in patients if f not in processed]
+    
     print('There are ' + str(len(patients)) + ' patients. ' \
        + str(len(to_process)) + ' left to process')
     # Several python scripts can run in parallel. We will make shuffled batches
-    # of 100 patients until finalized.
+    # of a BATCH_SIZE until finalized.
     shuffle(to_process)
     if len(to_process) > BATCH_SIZE:
         return to_process[0:BATCH_SIZE]
