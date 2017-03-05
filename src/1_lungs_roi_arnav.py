@@ -3,14 +3,13 @@
 """
 Created on Fri Mar  3 00:59:56 2017
 
-@authors: virilo, adrianmelic
+@author: spanish kagglers
 """
 # Based on:
 # https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
 
 import os
 import time
-from random import shuffle
 import pickle
 
 import numpy as np # linear algebra
@@ -25,15 +24,15 @@ import sys
 sys.path.append("../")
 # Import our competition variables
 from competition_config import *
-D = arnavs_lugns_roi_dashboard
+D1 = arnavs_lugns_roi_dashboard
 
 START_TIME = time.time()
 
-if not os.path.exists(D['OUTPUT_DIRECTORY']):
-    os.makedirs(D['OUTPUT_DIRECTORY'])
+if not os.path.exists(D1['OUTPUT_DIRECTORY']):
+    os.makedirs(D1['OUTPUT_DIRECTORY'])
 
-# Input data files are available in the D['INPUT_DIRECTORY'].
-# Any results you write has to be saved in the D['OUTPUT_DIRECTORY'].
+# Input data files are available in the D1['INPUT_DIRECTORY'].
+# Any results you write has to be saved in the D1['OUTPUT_DIRECTORY'].
 
 def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
@@ -88,7 +87,7 @@ def get_segmented_lungs(image, plot=False):
     # Step 5: Erosion operation with a disk of radius 2. This operation is
     # seperate the lung nodules attached to the blood vessels
     # using EROSION_BALL_RADIUS from competition_config.py
-    selem = disk(D['EROSION_BALL_RADIUS'])
+    selem = disk(D1['EROSION_BALL_RADIUS'])
     binary = binary_erosion(binary, selem)
     if plot:
         print('Step 5: Erosion operation')
@@ -98,7 +97,7 @@ def get_segmented_lungs(image, plot=False):
     # Step 6: Closure operation with a disk of radius 10. This operation is
     # to keep nodules attached to the lung wall
     # using CLOSING_BALL_RADIUS from competition_config.py
-    selem = disk(D['CLOSING_BALL_RADIUS'])
+    selem = disk(D1['CLOSING_BALL_RADIUS'])
     binary = binary_closing(binary, selem)
     if plot:
         print('Step 6: Closure operation')
@@ -176,7 +175,7 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
                 print(patient + ' patient rised an IndexError! Continuing...')
 
 # Turn to False to not save an image with slices and binary mask superimposed
-segment_all_ct_scans(D['INPUT_DIRECTORY'], D['OUTPUT_DIRECTORY'], True)
+segment_all_ct_scans(D1['INPUT_DIRECTORY'], D1['OUTPUT_DIRECTORY'], True)
 
 print("Total elapsed time: " + \
       str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
