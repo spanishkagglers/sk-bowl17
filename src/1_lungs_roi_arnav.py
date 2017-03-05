@@ -26,6 +26,10 @@ sys.path.append("../")
 from competition_config import *
 D1 = arnavs_lugns_roi_dashboard
 
+if AWS:
+    import boto3
+    s3 = boto3.client('s3')
+
 START_TIME = time.time()
 
 if not os.path.exists(D1['OUTPUT_DIRECTORY']):
@@ -154,15 +158,25 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
 
                 # If true, save image as .png with input image and binary mask superimposed
                 if image:
-                    plot_ct_scan(segmented_ct_scan)
                     # patient has .pickle extension, we will remove it to save .png
-                    plt.savefig(output_path + \
-                                patient.rsplit('.', 1)[0] + '.png', format='png')
+                    patient_img = patient.split('.')[0] + '.png'
+                    plot_ct_scan(segmented_ct_scan)
+                    plt.savefig(output_path + patient_img, format='png')
+                    if AWS:
+                        print('Uploading to S3', patient_img)
+                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
+                        s3.upload_file(output_path + patient_img, \
+                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
                 with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_ct_scan, handle, protocol=PICKLE_PROTOCOL)
+                    if AWS:
+                        print('Uploading to S3', patient)
+                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
+                        s3.upload_file(output_path + patient, \
+                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

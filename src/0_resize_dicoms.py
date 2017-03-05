@@ -24,6 +24,10 @@ D0 = resize_dashboard
 if not os.path.exists(D0['OUTPUT_DIRECTORY']):
     os.makedirs(D0['OUTPUT_DIRECTORY'])
 
+if AWS:
+    import boto3
+    s3 = boto3.client('s3')
+
 START_TIME = time.time()
 
 def read_ct_scan(folder_name):
@@ -98,7 +102,9 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
     patients = []
     while True:
         # batch_to_process function from competition_config
-        patients, len_prev_batch = batch_to_process(input_path, output_path), len(patients)
+        # it returns a *.pickle list, we will remove the extension this time
+        patients, len_prev_batch = \
+        [b.split('.')[0] for b in batch_to_process(input_path, output_path)], len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 
@@ -123,6 +129,11 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
                 # Save object as a .pickle
                 with open(output_path + patient + ".pickle", 'wb') as handle:
                     pickle.dump(resized_a, handle, protocol=2)
+                    if AWS:
+                        print('Uploading to S3', patient + '.pickle')
+                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
+                        s3.upload_file(output_path + patient + ".pickle", \
+                                       BUCKET, D0['OUTPUT_DIRECTORY'][3:] + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

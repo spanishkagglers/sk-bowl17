@@ -24,6 +24,10 @@ sys.path.append("../")
 from competition_config import *
 D5 = nodules_roi_dashboard
 
+if AWS:
+    import boto3
+    s3 = boto3.client('s3')
+
 START_TIME = time.time()
 
 if not os.path.exists(D5['OUTPUT_DIRECTORY']):
@@ -137,15 +141,25 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
 
                 # If true, save image as .png of 3D plotted segmented nodules
                 if image:
-                    plot_3d(segmented_nodules_ct_scan, 604)
                     # patient has .pickle extension, we will remove it to save .png
-                    plt.savefig(output_path + \
-                                patient.rsplit('.', 1)[0] + '.png', format='png')
+                    patient_img = patient.split('.')[0] + '.png'
+                    plot_3d(segmented_nodules_ct_scan, 604)
+                    plt.savefig(output_path + patient_img, format='png')
+                    if AWS:
+                        print('Uploading to S3', patient_img)
+                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
+                        s3.upload_file(output_path + patient_img, \
+                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
                 with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)
+                    if AWS:
+                        print('Uploading to S3', patient)
+                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
+                        s3.upload_file(output_path + patient, \
+                                       BUCKET, D5['OUTPUT_DIRECTORY'][3:] + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time
