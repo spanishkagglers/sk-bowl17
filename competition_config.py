@@ -200,6 +200,18 @@ features_extraction_nodules_3d={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_Features_Extraction_3D_Nodules/',
 }
 
+####################### 13 - Features Extraction Lungs
+#
+# 
+# 
+
+global features_extraction_lungs_3d
+
+features_extraction_lungs_3d={
+    'INPUT_DIRECTORY'  : features_extraction_nodules_3d['OUTPUT_DIRECTORY'],
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/13_Features_Extraction_Lungs/',
+}
+
 
 ####################### Extras and Cloud
 #
