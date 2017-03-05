@@ -205,8 +205,8 @@ features_extraction_nodules_3d={
 #
 #
 
-AWS = False # To upload results to AWS S3 bucket
-BUCKET = 'kaggle-adri' # $0.023/GB per month
+AWS = False # To download form and upload to the AWS S3 bucket
+BUCKET = 'kaggle-adri'
 
 from random import shuffle
 import os
@@ -214,9 +214,12 @@ import os
 # Get what patients are left to process, pick randomnly a batch
 BATCH_SIZE = 50
 
-def batch_to_process(input_path, output_path, both_pickles):
+def batch_to_process(input_path, output_path, aws, both_pickles):
     # Take all files/folders to process, forget about the ones already processed
-    # If both folders have pickles. Forget images and other files
+    
+#    if aws:
+
+    # Else, if both folders have pickles. Forget images and other files
     if both_pickles:
         patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
         processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
