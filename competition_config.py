@@ -216,8 +216,7 @@ BATCH_SIZE = 50
 def batch_to_process(input_path, output_path):
     # Take all files/folders to process, forget about the ones already processed
     patients = os.listdir(input_path)
-    processed = [p.split('.')[0] \
-                for p in os.listdir(output_path) if p.endswith('.pickle')]
+    processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
     to_process = [f for f in patients if f not in processed]
     print('There are ' + str(len(patients)) + ' patients. ' \
        + str(len(to_process)) + ' left to process')
