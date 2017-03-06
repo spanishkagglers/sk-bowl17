@@ -116,7 +116,7 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
     while True:
         # batch_to_process function from competition_config
         patients, len_prev_batch = \
-        batch_to_process(input_path, output_path, True), len(patients)
+        batch_to_process(input_path, output_path, AWS), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 
@@ -127,13 +127,13 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                 print(patient + ' already processed. Skipping...')
                 continue
 
-            # Load pickle with segmented_ct_scan
-            with open(input_path + patient, 'rb') as handle:
-                segmented_ct_scan = pickle.load(handle)
-
             # Get nodules
             print('Getting nodules from ' + patient + '...')
             try:
+                if AWS: download_from_s3(input_path + patient)
+                # Load pickle with segmented_ct_scan
+                with open(input_path + patient, 'rb') as handle:
+                    segmented_ct_scan = pickle.load(handle)
                 segmented_nodules_ct_scan = get_nodules(segmented_ct_scan)
 
                 # If true, save image as .png of 3D plotted segmented nodules
@@ -148,7 +148,9 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                 # Save object as a .pickle
                 with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)
-                    if AWS: upload_to_s3(output_path + patient)
+                    if AWS:
+                        upload_to_s3(output_path + patient)
+                        clean_after_upload(input_path + patient, output_path + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

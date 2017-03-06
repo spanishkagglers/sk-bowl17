@@ -282,8 +282,10 @@ def download_from_s3(input_path, input_is_folder=False):
         to_download = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
                       if p['Key'].split('/')[-1].endswith('.dcm')]
         for file in to_download:
+            if os.path.isfile(input_path + '/' + file): continue
             download_from_s3(input_path + '/' + file)
     else:
+        if os.path.isfile(input_path): return
         s3.download_file(BUCKET, s3_path, s3_path)
         print(input_path, 'downloaded from S3')
         
@@ -297,13 +299,14 @@ def upload_to_s3(local_path):
 
 def clean_after_upload(input_path, output_path, input_is_folder=False):
     '''Delete files/folders from input and output after successful uplaod to S3'''
-    input_path = input_path[3:]
-    output_path = output_path[3:]
     if input_is_folder:
         shutil.rmtree(input_path)
+        print('Folder deleted:', input_path[3:])
     else:
         os.remove(input_path)
+        print('Input file deleted:', input_path)
     os.remove(output_path)
+    print('Output file deleted:', output_path)
 
 
 def read_from_s3(path, input_is_folder=False):

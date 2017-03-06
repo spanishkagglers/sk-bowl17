@@ -100,7 +100,7 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
         # batch_to_process function from competition_config
         # it returns a *.pickle list, we will remove the extension this time
         patients, len_prev_batch = \
-        batch_to_process(input_path, output_path, False), len(patients)
+        batch_to_process(input_path, output_path, AWS, input_is_folder=True), len(patients)
         if len(patients) == 0 or len(patients) == len_prev_batch:
             break
 
@@ -114,6 +114,7 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
             # Resize
             print('Resizing ' + patient + '...')
             try:
+                if AWS: download_from_s3(input_path + patient, input_is_folder=True)
                 ct_scan, original_scan = read_ct_scan(input_path + patient + '/')
 
                 # Resize pixel spacing to a certain isotrpic resolution
@@ -125,7 +126,11 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
                 # Save object as a .pickle
                 with open(output_path + patient + '.pickle', 'wb') as handle:
                     pickle.dump(resized_a, handle, protocol=PICKLE_PROTOCOL)
-                    if AWS: upload_to_s3(output_path + patient + '.pickle')
+                    if AWS:
+                        upload_to_s3(output_path + patient + '.pickle')
+                        clean_after_upload(input_path + patient, \
+                                           output_path + patient + '.pickle', \
+                                           input_is_folder=True)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time
