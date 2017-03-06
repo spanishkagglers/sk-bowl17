@@ -236,21 +236,29 @@ if AWS:
 
 from random import shuffle
 import os
+import shutil
 
 # Get what patients are left to process, pick randomnly a batch
-BATCH_SIZE = 50
+BATCH_SIZE = 100
 
-def batch_to_process(input_path, output_path, both_pickles):
-    # Take all files/folders to process, forget about the ones already processed
-
+def batch_to_process(input_path, output_path, aws=False, input_is_folder=False):
+    '''Take all files/folders to process, forget about the ones already processed'''
+    # If input folder have folders with dicoms
+    if input_is_folder:
+        if aws:
+            patients = read_from_s3(input_path, True)
+            processed = [p.split('.')[0] for p in read_from_s3(output_path) if p.endswith('.pickle')]
+        else:
+            patients = os.listdir(input_path)
+            processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
     # If both folders have pickles. Forget images and other files
-    if both_pickles:
-        patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
-        processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
-    # Else, it's the folders with dicoms
     else:
-        patients = os.listdir(input_path)
-        processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
+        if aws:
+            patients = read_from_s3(input_path)
+            processed = read_from_s3(output_path)
+        else:
+            patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
+            processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
     
     to_process = [f for f in patients if f not in processed]
     
@@ -264,7 +272,71 @@ def batch_to_process(input_path, output_path, both_pickles):
     else:
         return to_process
 
+def download_from_s3(input_path, input_is_folder=False):
+    '''Download file from S3, if its a dicoms folder, download content'''
+    s3_path = input_path[3:] # Don't need the '../' part
+    if input_is_folder:
+        if not os.path.exists(s3_path):
+            os.makedirs(s3_path)
+        ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path)
+        to_download = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
+                      if p['Key'].split('/')[-1].endswith('.dcm')]
+        for file in to_download:
+            if os.path.isfile(input_path + '/' + file): continue
+            download_from_s3(input_path + '/' + file)
+    else:
+        if os.path.isfile(input_path): return
+        s3.download_file(BUCKET, s3_path, s3_path)
+        print(input_path, 'downloaded from S3')
+        
+
 def upload_to_s3(local_path):
+    '''Upload to S3 bucket giving a local file path'''
     print('Uploading to S3', local_path)
-    # local_path example '../output/0_resize...'
+    # local_path example '../output/0_resize_dicoms/', removing '../'
     s3.upload_file(local_path, BUCKET, local_path[3:])
+
+
+def clean_after_upload(input_path, output_path, input_is_folder=False):
+    '''Delete files/folders from input and output after successful uplaod to S3'''
+    if input_is_folder:
+        shutil.rmtree(input_path)
+        print('Folder deleted:', input_path[3:])
+    else:
+        os.remove(input_path)
+        print('Input file deleted:', input_path)
+    os.remove(output_path)
+    print('Output file deleted:', output_path)
+
+
+def read_from_s3(path, input_is_folder=False):
+    '''Read files (.pickles) or folders from an S3 path'''
+    s3_path = path[3:] # Don't need the '../' part
+    if input_is_folder:
+        # We only want subfolders with dicoms, not dicoms, using '/' Delimiter
+        ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/')
+        final_list = [f.get('Prefix').split('/')[1] for f in ls_objects['CommonPrefixes']]
+        # If there are more than 1000 and less than 2000 files/folders
+        if ls_objects['IsTruncated']:
+            next_ls_objects = \
+            s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/', \
+                               ContinuationToken=ls_objects['NextContinuationToken'])
+            final_list += \
+            [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
+        # List will contain paths like ['example/patient/', ...], we only want patient
+        return final_list 
+    
+    else:
+        ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path)
+        final_list = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
+                      if p['Key'].split('/')[-1].endswith('.pickle')]
+        # If there are more than 1000 and less than 2000 files/folders
+        if ls_objects['IsTruncated']:
+                next_ls_objects = \
+                s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/', \
+                                   ContinuationToken=ls_objects['NextContinuationToken'])
+                final_list += \
+                [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
+        # List will contain paths like ['example/patient.pickle', ...],
+        # we only want patients.pickle, not images or other files
+        return final_list

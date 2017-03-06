@@ -14,6 +14,13 @@ import pickle
 
 from collections import Counter
 from sklearn.cluster import DBSCAN  
+
+import sys
+sys.path.append("../")
+# Import our competition variables, has to be before matplotlib
+from competition_config import *
+d=nodules_3d_segmentation
+
 #import cv2
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -21,10 +28,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import time
 start_time = time.time()
 
-import sys
-sys.path.append("../")
-from competition_config import *
-d=nodules_3d_segmentation
+
 
 from scipy.spatial.distance import *
 
