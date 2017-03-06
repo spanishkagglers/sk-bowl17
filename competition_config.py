@@ -7,6 +7,7 @@ Created on Sat Feb 18 18:37:58 2017
 
 global COMPETITION_HOME, COMPETITION_DATASET_DIRECTORY
 
+AWS = False # To download form and upload to the AWS S3 bucket
 
 # All routes must be ended by /
 
@@ -225,7 +226,6 @@ features_extraction_lungs_3d={
 #
 #
 
-AWS = False # To download form and upload to the AWS S3 bucket
 BUCKET = 'kaggle-adri'
 
 if AWS:
@@ -276,8 +276,8 @@ def download_from_s3(input_path, input_is_folder=False):
     '''Download file from S3, if its a dicoms folder, download content'''
     s3_path = input_path[3:] # Don't need the '../' part
     if input_is_folder:
-        if not os.path.exists(s3_path):
-            os.makedirs(s3_path)
+        if not os.path.exists(input_path):
+            os.makedirs(input_path)
         ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path)
         to_download = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
                       if p['Key'].split('/')[-1].endswith('.dcm')]
@@ -286,9 +286,8 @@ def download_from_s3(input_path, input_is_folder=False):
             download_from_s3(input_path + '/' + file)
     else:
         if os.path.isfile(input_path): return
-        s3.download_file(BUCKET, s3_path, s3_path)
-        print(input_path, 'downloaded from S3')
-        
+        s3.download_file(BUCKET, s3_path, input_path)
+
 
 def upload_to_s3(local_path):
     '''Upload to S3 bucket giving a local file path'''
@@ -333,10 +332,11 @@ def read_from_s3(path, input_is_folder=False):
         # If there are more than 1000 and less than 2000 files/folders
         if ls_objects['IsTruncated']:
                 next_ls_objects = \
-                s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/', \
+                s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, \
                                    ContinuationToken=ls_objects['NextContinuationToken'])
                 final_list += \
-                [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
+                [p['Key'].split('/')[-1] for p in next_ls_objects['Contents'] \
+                      if p['Key'].split('/')[-1].endswith('.pickle')]
         # List will contain paths like ['example/patient.pickle', ...],
         # we only want patients.pickle, not images or other files
         return final_list
