@@ -23,6 +23,8 @@ from competition_config import *
 D0 = resize_dashboard
 if not os.path.exists(D0['OUTPUT_DIRECTORY']):
     os.makedirs(D0['OUTPUT_DIRECTORY'])
+if not os.path.exists(D0['INPUT_DIRECTORY']):
+    os.makedirs(D0['INPUT_DIRECTORY'])
 
 START_TIME = time.time()
 
