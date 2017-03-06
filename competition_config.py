@@ -18,7 +18,8 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 #COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'mini_stage1/' # optional number of patients
 
 import pickle
-PICKLE_PROTOCOL = 2 #pickle.HIGHEST_PROTOCOL
+# Used protocol 2 but there were coding ascii errors. Similar processing time 2 vs 4
+PICKLE_PROTOCOL = pickle.HIGHEST_PROTOCOL # protocol 4
 
 ####################### 0 - RESIZE DICOMS
 #
