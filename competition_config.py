@@ -170,8 +170,8 @@ nodules_info_csv_from_step_7={
 #
 CHUNK_SIDE = 64
 
-LUNA_PREFIX = "ANN" # LUNA Annotations
-#LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
+#LUNA_PREFIX = "ANN" # LUNA Annotations
+LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
 
 if LUNA_PREFIX == "ANN":
     LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations.csv"
