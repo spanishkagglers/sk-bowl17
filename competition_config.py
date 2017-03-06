@@ -238,19 +238,26 @@ from random import shuffle
 import os
 
 # Get what patients are left to process, pick randomnly a batch
-BATCH_SIZE = 50
+BATCH_SIZE = 100
 
-def batch_to_process(input_path, output_path, both_pickles):
-    # Take all files/folders to process, forget about the ones already processed
-
+def batch_to_process(input_path, output_path, aws=False, both_pickles=True):
+    '''Take all files/folders to process, forget about the ones already processed'''
     # If both folders have pickles. Forget images and other files
     if both_pickles:
-        patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
-        processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
+        if aws:
+            patients = read_from_s3(input_path)
+            processed = read_from_s3(output_path)
+        else:
+            patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
+            processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
     # Else, it's the folders with dicoms
     else:
-        patients = os.listdir(input_path)
-        processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
+        if aws:
+            patients = read_from_s3(input_path, True)
+            processed = read_from_s3(output_path)
+        else:
+            patients = os.listdir(input_path)
+            processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
     
     to_process = [f for f in patients if f not in processed]
     
@@ -283,9 +290,9 @@ def read_from_s3(path, folders=False):
     
     ls_objects = s3.list_objects(Bucket=BUCKET, Prefix=path[3:])
     # List will contain paths like ['example/patient.pickle', ...],
-    # we only want patients.pickle, not images or others
+    # we only want patients.pickle, not images or other files
     return [p['Key'].split('/')[-1] \
             for p in ls_objects['Contents'] \
             if p['Key'].split('/')[-1].endswith('.pickle')]
 
-print(read_from_s3(COMPETITION_HOME + 'output/1_lungs_roi_arnav/'))
+print(batch_to_process(COMPETITION_HOME + 'output/0_resize_dicoms/', COMPETITION_HOME + 'output/1_lungs_roi_arnav/', aws=True))
