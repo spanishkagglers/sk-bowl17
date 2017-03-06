@@ -15,8 +15,6 @@ import pickle
 from skimage.morphology import ball, binary_closing
 from skimage.measure import label, regionprops
 from skimage import measure
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import sys
 sys.path.append("../")
@@ -27,7 +25,10 @@ D5 = nodules_roi_dashboard
 if AWS:
     import boto3
     s3 = boto3.client('s3')
-
+    from matplotlib import use as pltuse
+    pltuse('Agg') # Avoid no display name and environment variable error on AWS
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 START_TIME = time.time()
 
 if not os.path.exists(D5['OUTPUT_DIRECTORY']):
@@ -126,7 +127,7 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
 
         for patient in patients: # patient has .pickle extension
             i_start_time = time.time()
-            # If pickle already exist, skip to the next patient
+            # If pickle already exists, skip to the next patient
             if os.path.isfile(output_path + patient):
                 print(patient + ' already processed. Skipping...')
                 continue
@@ -150,7 +151,7 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                         print('Uploading to S3', patient_img)
                         # Bucket upload to the OUTPUT_DIRECTORY without '../'
                         s3.upload_file(output_path + patient_img, \
-                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient_img)
+                                       BUCKET, output_path[3:] + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
@@ -160,7 +161,7 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                         print('Uploading to S3', patient)
                         # Bucket upload to the OUTPUT_DIRECTORY without '../'
                         s3.upload_file(output_path + patient, \
-                                       BUCKET, D5['OUTPUT_DIRECTORY'][3:] + patient)
+                                       BUCKET, output_path[3:] + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time
