@@ -126,13 +126,12 @@ if __name__ == "__main__":
 
     START_TIME = time.time()
 
-    """
-    for subfolder in D0['SUBFOLDERS']:
+    for subfolder in D0['SUBFOLDERS']: # all Origin of images inserts should be made ASAP
         save_LUNA_origins(subfolder)
-        resize_save_LUNA_imgs(subfolder)
-    """
+        #resize_save_LUNA_imgs(subfolder)
+ 
     subfolder = "subset0/"
-    save_LUNA_origins(subfolder)
+    #save_LUNA_origins(subfolder)
     resize_save_LUNA_imgs(subfolder)
     
     print("Total elapsed time: " + \
