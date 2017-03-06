@@ -168,23 +168,30 @@ nodules_info_csv_from_step_7={
 #
 CHUNK_SIDE = 64
 
-LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations.csv"
-LUNA_ANN = LUNA_ROOT + "ANN" + str(CHUNK_SIDE) + "/" # LUNA Annotations
+LUNA_PREFIX = "ANN" # LUNA Annotations
+#LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
 
-LUNA_ANN_EX_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations_excluded.csv"
-LUNA_ANN_EX = LUNA_ROOT + "ANN_EX" + str(CHUNK_SIDE) + "/" # LUNA Annotations excluded
+if LUNA_PREFIX == "ANN":
+    LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations.csv"
+else:
+    LUNA_ANN_CSV_FILE = LUNA_CSV_DIRECTORY + "annotations_excluded.csv"
+
+LUNA_ANN = LUNA_ROOT + LUNA_PREFIX + str(CHUNK_SIDE) + "/"
 
 chunks_extraction={
     'LUNA_ROOT' : LUNA_ROOT,
     'INPUT_DIRECTORY' : LUNA_RESIZED_DIRECTORY,
     'CHUNK_DIMS': (CHUNK_SIDE, CHUNK_SIDE, CHUNK_SIDE),
+    'PREFIX': LUNA_PREFIX,
     'ANN_CSV_FILE': LUNA_ANN_CSV_FILE,
     'OUTPUT_ANN_IMG_DIR' : LUNA_ANN,
-    'ANN_EX_CSV_FILE': LUNA_ANN_EX_CSV_FILE,
-    'OUTPUT_ANN_EX_IMG_DIR' : LUNA_ANN_EX,
     'SUBFOLDERS' : LUNA_SUBFOLDERS,
     'ORIGIN_OF_IMAGES_FILE': LUNA_ORIGIN_OF_IMAGES_FILE
 }
+
+####################### 8 - 3D DSB chunks extraction
+#
+DSB_ANN_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
 
 
 ####################### 10 - Features Extraction Nodules 3D
@@ -198,6 +205,18 @@ features_extraction_nodules_3d={
     'INPUT_DIRECTORY_1' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
     'INPUT_DIRECTORY_2' : nodules_3d_segmentation['OUTPUT_DIRECTORY'],
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_Features_Extraction_3D_Nodules/',
+}
+
+####################### 13 - Features Extraction Lungs
+#
+# 
+# 
+
+global features_extraction_lungs_3d
+
+features_extraction_lungs_3d={
+    'INPUT_DIRECTORY'  : features_extraction_nodules_3d['OUTPUT_DIRECTORY'],
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/13_Features_Extraction_Lungs/',
 }
 
 

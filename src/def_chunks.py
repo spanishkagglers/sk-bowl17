@@ -93,7 +93,7 @@ def get_chunk(img_set, ann_center, chunk_dims=(64, 64, 64), show_chunk_out=True,
         if show_chunk_out:
             print ("PART OF CHUNK IS OUT!")
             print ("offset", offset_min, offset_max, offset)
-            print ("chunk id", id)
+            print ("chunk id", chunk_id)
 
         new_chunk = np.zeros(shape=chunk_dims, dtype=np.int16)
         new_chunk[offset[0]:offset[0]+(max_slice-min_slice),

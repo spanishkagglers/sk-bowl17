@@ -5,19 +5,12 @@ Created on Sat Feb 25 18:02:42 2017
 @author: javier
 """
 
-import pandas as pd
-import numpy as np # linear algebra
+import numpy as np
 import os
 from glob import glob
+import csv
 
-import scipy.misc
 import pickle
-
-from collections import Counter
-from sklearn.cluster import DBSCAN  
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 import time
 start_time = time.time()
@@ -26,9 +19,6 @@ import sys
 sys.path.append("../")
 from competition_config import *
 d=features_extraction_nodules_3d
-
-
-from scipy.spatial.distance import *
 
 from scipy import stats
 
@@ -107,6 +97,16 @@ def sphGrid2cartGrid(n,r,zc,yc,xc):
     return z, y, x
 
 
+def WriteDictToCSV(csv_file,csv_columns,dict_data):
+
+    with open(csv_file, 'w') as csvfile:
+        #writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+        writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n', fieldnames=csv_columns)
+        writer.writeheader()
+        for data in dict_data:
+            writer.writerow(data)
+    return     
+
 
 file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
 
@@ -138,11 +138,10 @@ for input_filename in tqdm(file_list):
             
             roiGC_to_noduleGC_vector = nodule_geo_center-roi_geo_center
             
+            # coordenadas de 100 puntos de una esfera radio=radius/2
+            # z2i,y2i,x2i = np.round(sphGrid2cartGrid(10,nodule_mass_radius/2,nodule_geo_center[0],nodule_geo_center[1],nodule_geo_center[2]),0)
+            # nod_coords = np.concatenate(([nod_coords_dict['z']],[nod_coords_dict['y']],[nod_coords_dict['x']]),axis=0).T
 
-            z2i,y2i,x2i = np.round(sphGrid2cartGrid(10,nodule_mass_radius/2,0,0,0),0)
-            #cont = 0
-            #for i in range(len(z2i)):
-            #    if()
             
             '''
             from matplotlib import pyplot as plt
@@ -212,6 +211,10 @@ for input_filename in tqdm(file_list):
         with open(output_filename, 'wb') as handle:
             output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
             pickle.dump(features, handle, protocol=PICKLE_PROTOCOL)
+        
+        csv_columns=sorted(list(features[0].keys()))
+        csv_file = d['OUTPUT_DIRECTORY'] + ct_scan_id + ".csv"
+        WriteDictToCSV(csv_file,csv_columns,features)
             
         
 print("Ellapsed time: {} seconds".format((time.time() - start_time)))
