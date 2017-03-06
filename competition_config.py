@@ -236,6 +236,7 @@ if AWS:
 
 from random import shuffle
 import os
+import shutil
 
 # Get what patients are left to process, pick randomnly a batch
 BATCH_SIZE = 100
@@ -294,9 +295,15 @@ def upload_to_s3(local_path):
     s3.upload_file(local_path, BUCKET, local_path[3:])
 
 
-def clean_after_upload(input_path, output_path, input_has_folders=False):
+def clean_after_upload(input_path, output_path, input_is_folder=False):
     '''Delete files/folders from input and output after successful uplaod to S3'''
-    pass
+    input_path = input_path[3:]
+    output_path = output_path[3:]
+    if input_is_folder:
+        shutil.rmtree(input_path)
+    else:
+        os.remove(input_path)
+    os.remove(output_path)
 
 
 def read_from_s3(path, input_is_folder=False):
@@ -330,5 +337,3 @@ def read_from_s3(path, input_is_folder=False):
         # List will contain paths like ['example/patient.pickle', ...],
         # we only want patients.pickle, not images or other files
         return final_list
-
-download_from_s3('../stage1/0015ceb851d7251b8f399e39779d1e7d', True)
