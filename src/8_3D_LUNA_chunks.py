@@ -63,7 +63,7 @@ def save_LUNA_chunks(subfolder):
             numpyOrigin = np.array([image_row.origin_z, image_row.origin_y, image_row.origin_x])
             annots_sel = annots[annots["seriesuid"] == LUNAid]
             for index, annot in annots_sel.iterrows():
-                ann_file = prefix + str(index) + ".pickle"
+                ann_file = prefix.lower() + str(index) + ".pickle"
                 if not os.path.isfile(OUTPUT_DIRECTORY + ann_file):
                     n_ann += 1
                     world_ann_center = np.asarray([float(annot["coordZ"]),float(annot["coordY"]),float(annot["coordX"])])
