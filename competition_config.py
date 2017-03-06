@@ -264,7 +264,28 @@ def batch_to_process(input_path, output_path, both_pickles):
     else:
         return to_process
 
+
 def upload_to_s3(local_path):
+    '''Upload to S3 bucket giving a local file path'''
     print('Uploading to S3', local_path)
-    # local_path example '../output/0_resize...'
+    # local_path example '../output/0_resize_dicoms/', removing '../'
     s3.upload_file(local_path, BUCKET, local_path[3:])
+
+
+def read_from_s3(path, folders=False):
+    '''Read files (.pickles) or folders from an S3 path'''
+    if folders:
+        # We only want subfolders with dicoms, not dicoms, using '/' Delimiter
+        ls_objects = s3.list_objects(Bucket=BUCKET, Prefix=path[3:], Delimiter='/')
+        # List will contain paths like ['example/patient/', ...], we only want patient
+        return [f.get('Prefix').split('/')[1] \
+                for f in ls_objects['CommonPrefixes']]
+    
+    ls_objects = s3.list_objects(Bucket=BUCKET, Prefix=path[3:])
+    # List will contain paths like ['example/patient.pickle', ...],
+    # we only want patients.pickle, not images or others
+    return [p['Key'].split('/')[-1] \
+            for p in ls_objects['Contents'] \
+            if p['Key'].split('/')[-1].endswith('.pickle')]
+
+print(read_from_s3(COMPETITION_HOME + 'output/1_lungs_roi_arnav/'))
