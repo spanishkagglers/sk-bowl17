@@ -205,7 +205,7 @@ global features_extraction_nodules_3d
 features_extraction_nodules_3d={
     'INPUT_DIRECTORY_1' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
     'INPUT_DIRECTORY_2' : nodules_3d_segmentation['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_Features_Extraction_3D_Nodules/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_features_extraction_3D_nodules/',
 }
 
 ####################### 13 - Features Extraction Lungs
@@ -217,7 +217,7 @@ global features_extraction_lungs_3d
 
 features_extraction_lungs_3d={
     'INPUT_DIRECTORY'  : features_extraction_nodules_3d['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/13_Features_Extraction_Lungs/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/13_features_extraction_lungs/',
 }
 
 
@@ -227,6 +227,12 @@ features_extraction_lungs_3d={
 
 AWS = False # To download form and upload to the AWS S3 bucket
 BUCKET = 'kaggle-adri'
+
+if AWS:
+    import boto3
+    s3 = boto3.client('s3')
+    from matplotlib import use as pltuse
+    pltuse('Agg', warn=False) # Avoid no display name and environment variable error on AWS
 
 from random import shuffle
 import os
@@ -257,3 +263,8 @@ def batch_to_process(input_path, output_path, both_pickles):
         return to_process[0:BATCH_SIZE]
     else:
         return to_process
+
+def upload_to_s3(local_path):
+    print('Uploading to S3', local_path)
+    # local_path example '../output/0_resize...'
+    s3.upload_file(local_path, BUCKET, local_path[3:])

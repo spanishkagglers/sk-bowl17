@@ -18,15 +18,10 @@ from skimage import measure
 
 import sys
 sys.path.append("../")
-# Import our competition variables
+# Import our competition variables, has to be before matplotlib
 from competition_config import *
 D5 = nodules_roi_dashboard
 
-if AWS:
-    import boto3
-    s3 = boto3.client('s3')
-    from matplotlib import use as pltuse
-    pltuse('Agg') # Avoid no display name and environment variable error on AWS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 START_TIME = time.time()
@@ -147,21 +142,13 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                     patient_img = patient.split('.')[0] + '.png'
                     plot_3d(segmented_nodules_ct_scan, 604)
                     plt.savefig(output_path + patient_img, format='png')
-                    if AWS:
-                        print('Uploading to S3', patient_img)
-                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
-                        s3.upload_file(output_path + patient_img, \
-                                       BUCKET, output_path[3:] + patient_img)
+                    if AWS: upload_to_s3(output_path + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
                 with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_nodules_ct_scan, handle, protocol=PICKLE_PROTOCOL)
-                    if AWS:
-                        print('Uploading to S3', patient)
-                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
-                        s3.upload_file(output_path + patient, \
-                                       BUCKET, output_path[3:] + patient)
+                    if AWS: upload_to_s3(output_path + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

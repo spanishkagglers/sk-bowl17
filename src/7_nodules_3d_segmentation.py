@@ -23,14 +23,10 @@ start_time = time.time()
 
 import sys
 sys.path.append("../")
+# Import our competition variables, has to be before matplotlib
 from competition_config import *
 d=nodules_3d_segmentation
 
-if AWS:
-    import boto3
-    s3 = boto3.client('s3')
-    from matplotlib import use as pltuse
-    pltuse('Agg') # Avoid no display name and environment variable error on AWS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -184,19 +180,11 @@ def nodule_segmentation(ct_scan_id, d):
     info_output_filename, points_output_filename = get_output_filenames(ct_scan_id)
     with open(info_output_filename, 'wb') as handle:
         pickle.dump(nodules, handle, protocol=PICKLE_PROTOCOL)
-        if AWS:
-            print('Uploading to S3', info_output_filename)
-            # Bucket upload to the OUTPUT_DIRECTORY without '../'
-            s3.upload_file(info_output_filename, \
-                           BUCKET, info_output_filename[3:])
+        if AWS: upload_to_s3(info_output_filename)
+
     with open(points_output_filename, 'wb') as handle:
         pickle.dump(clusters_dict, handle, protocol=PICKLE_PROTOCOL)
-        if AWS:
-            print('Uploading to S3', points_output_filename)
-            # Bucket upload to the OUTPUT_DIRECTORY without '../'
-            s3.upload_file(points_output_filename, \
-                           BUCKET, points_output_filename[3:])
-    
+        if AWS: upload_to_s3(points_output_filename)
         
 
 file_list=glob(d['INPUT_DIRECTORY']+"*.pickle")

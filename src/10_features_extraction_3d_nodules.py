@@ -17,6 +17,7 @@ start_time = time.time()
 
 import sys
 sys.path.append("../")
+# Import our competition variables, has to be before matplotlib
 from competition_config import *
 d=features_extraction_nodules_3d
 
@@ -211,10 +212,12 @@ for input_filename in tqdm(file_list):
         with open(output_filename, 'wb') as handle:
             output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
             pickle.dump(features, handle, protocol=PICKLE_PROTOCOL)
+            if AWS: upload_to_s3(output_filename)
         
         csv_columns=sorted(list(features[0].keys()))
         csv_file = d['OUTPUT_DIRECTORY'] + ct_scan_id + ".csv"
         WriteDictToCSV(csv_file,csv_columns,features)
+        if AWS: upload_to_s3(csv_file)
             
         
 print("Ellapsed time: {} seconds".format((time.time() - start_time)))

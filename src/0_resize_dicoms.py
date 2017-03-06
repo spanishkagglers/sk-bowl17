@@ -18,15 +18,11 @@ import dicom
 
 import sys
 sys.path.append("../")
-# Import our competition variables
+# Import our competition variables, has to be before matplotlib
 from competition_config import *
 D0 = resize_dashboard
 if not os.path.exists(D0['OUTPUT_DIRECTORY']):
     os.makedirs(D0['OUTPUT_DIRECTORY'])
-
-if AWS:
-    import boto3
-    s3 = boto3.client('s3')
 
 START_TIME = time.time()
 
@@ -127,13 +123,9 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
                 print('Shape before:', ct_scan.shape, '-', 'After:', resized_a.shape)
 
                 # Save object as a .pickle
-                with open(output_path + patient + ".pickle", 'wb') as handle:
-                    pickle.dump(resized_a, handle, protocol=2)
-                    if AWS:
-                        print('Uploading to S3', patient + '.pickle')
-                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
-                        s3.upload_file(output_path + patient + ".pickle", \
-                                       BUCKET, D0['OUTPUT_DIRECTORY'][3:] + patient)
+                with open(output_path + patient + '.pickle', 'wb') as handle:
+                    pickle.dump(resized_a, handle, protocol=PICKLE_PROTOCOL)
+                    if AWS: upload_to_s3(output_path + patient + '.pickle')
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time

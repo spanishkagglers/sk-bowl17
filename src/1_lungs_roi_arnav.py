@@ -21,15 +21,10 @@ from scipy import ndimage as ndi
 
 import sys
 sys.path.append("../")
-# Import our competition variables
+# Import our competition variables, has to be before matplotlib
 from competition_config import *
 D1 = arnavs_lugns_roi_dashboard
 
-if AWS:
-    import boto3
-    s3 = boto3.client('s3')
-    from matplotlib import use as pltuse
-    pltuse('Agg') # Avoid no display name and environment variable error on AWS
 import matplotlib.pyplot as plt
 
 
@@ -166,21 +161,13 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
                     patient_img = patient.split('.')[0] + '.png'
                     plot_ct_scan(segmented_ct_scan)
                     plt.savefig(output_path + patient_img, format='png')
-                    if AWS:
-                        print('Uploading to S3', patient_img)
-                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
-                        s3.upload_file(output_path + patient_img, \
-                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient_img)
+                    if AWS: upload_to_s3(output_path + patient_img)
                     plt.close()
 
                 # Save object as a .pickle
                 with open(output_path + patient, 'wb') as handle:
                     pickle.dump(segmented_ct_scan, handle, protocol=PICKLE_PROTOCOL)
-                    if AWS:
-                        print('Uploading to S3', patient)
-                        # Bucket upload to the OUTPUT_DIRECTORY without '../'
-                        s3.upload_file(output_path + patient, \
-                                       BUCKET, D1['OUTPUT_DIRECTORY'][3:] + patient)
+                    if AWS: upload_to_s3(output_path + patient)
 
                 # Print and time to finish
                 i_time = time.time() - i_start_time
