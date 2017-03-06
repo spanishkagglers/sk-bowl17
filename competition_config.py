@@ -276,8 +276,8 @@ def download_from_s3(input_path, input_is_folder=False):
     '''Download file from S3, if its a dicoms folder, download content'''
     s3_path = input_path[3:] # Don't need the '../' part
     if input_is_folder:
-        if not os.path.exists(s3_path):
-            os.makedirs(s3_path)
+        if not os.path.exists(input_path):
+            os.makedirs(input_path)
         ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path)
         to_download = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
                       if p['Key'].split('/')[-1].endswith('.dcm')]
@@ -286,7 +286,7 @@ def download_from_s3(input_path, input_is_folder=False):
             download_from_s3(input_path + '/' + file)
     else:
         if os.path.isfile(input_path): return
-        s3.download_file(BUCKET, s3_path, s3_path)
+        s3.download_file(BUCKET, s3_path, input_path)
         print(input_path, 'downloaded from S3')
         
 
