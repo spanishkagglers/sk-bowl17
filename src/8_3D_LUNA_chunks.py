@@ -53,6 +53,7 @@ def save_LUNA_chunks(subfolder):
     n_ann = 0
     annots = pd.read_csv(ANNOTS_FILE)
     print("Opening", prefix, ANNOTS_FILE)
+    annots = annots[annots.diameter_mm > 3]
     LUNAids = annots.seriesuid.unique() # numpy.ndarray
     for LUNAid in LUNAids:
         img_file = LUNAid + ".pickle"
