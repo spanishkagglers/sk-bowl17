@@ -240,24 +240,24 @@ import os
 # Get what patients are left to process, pick randomnly a batch
 BATCH_SIZE = 100
 
-def batch_to_process(input_path, output_path, aws=False, both_pickles=True):
+def batch_to_process(input_path, output_path, aws=False, input_has_folders=False):
     '''Take all files/folders to process, forget about the ones already processed'''
-    # If both folders have pickles. Forget images and other files
-    if both_pickles:
-        if aws:
-            patients = read_from_s3(input_path)
-            processed = read_from_s3(output_path)
-        else:
-            patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
-            processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
-    # Else, it's the folders with dicoms
-    else:
+    # If input folder have folders with dicoms
+    if input_has_folders:
         if aws:
             patients = read_from_s3(input_path, True)
             processed = read_from_s3(output_path)
         else:
             patients = os.listdir(input_path)
             processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
+    # If both folders have pickles. Forget images and other files
+    else:
+        if aws:
+            patients = read_from_s3(input_path)
+            processed = read_from_s3(output_path)
+        else:
+            patients = [p for p in os.listdir(input_path) if p.endswith('.pickle')]
+            processed = [p for p in os.listdir(output_path) if p.endswith('.pickle')]
     
     to_process = [f for f in patients if f not in processed]
     
@@ -279,20 +279,37 @@ def upload_to_s3(local_path):
     s3.upload_file(local_path, BUCKET, local_path[3:])
 
 
-def read_from_s3(path, folders=False):
-    '''Read files (.pickles) or folders from an S3 path'''
-    if folders:
-        # We only want subfolders with dicoms, not dicoms, using '/' Delimiter
-        ls_objects = s3.list_objects(Bucket=BUCKET, Prefix=path[3:], Delimiter='/')
-        # List will contain paths like ['example/patient/', ...], we only want patient
-        return [f.get('Prefix').split('/')[1] \
-                for f in ls_objects['CommonPrefixes']]
-    
-    ls_objects = s3.list_objects(Bucket=BUCKET, Prefix=path[3:])
-    # List will contain paths like ['example/patient.pickle', ...],
-    # we only want patients.pickle, not images or other files
-    return [p['Key'].split('/')[-1] \
-            for p in ls_objects['Contents'] \
-            if p['Key'].split('/')[-1].endswith('.pickle')]
+def clean_after_upload(input_path, output_path, input_has_folders=False):
+    '''Delete files/folders from input and output after successful uplaod to S3'''
+    pass
 
-print(batch_to_process(COMPETITION_HOME + 'output/0_resize_dicoms/', COMPETITION_HOME + 'output/1_lungs_roi_arnav/', aws=True))
+
+def read_from_s3(path, input_has_folders=False):
+    '''Read files (.pickles) or folders from an S3 path'''
+    if input_has_folders:
+        # We only want subfolders with dicoms, not dicoms, using '/' Delimiter
+        ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=path[3:], Delimiter='/')
+        final_list = [f.get('Prefix').split('/')[1] for f in ls_objects['CommonPrefixes']]
+        # If there are more than 1000 and less than 2000 files/folders
+        if ls_objects['IsTruncated']:
+            next_ls_objects = \
+            s3.list_objects_v2(Bucket=BUCKET, Prefix=path[3:], Delimiter='/', \
+                               ContinuationToken=ls_objects['NextContinuationToken'])
+            final_list += \
+            [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
+        # List will contain paths like ['example/patient/', ...], we only want patient
+        return final_list 
+    
+    else:
+        ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=path[3:])
+        final_list = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
+                      if p['Key'].split('/')[-1].endswith('.pickle')]
+        if ls_objects['IsTruncated']:
+                next_ls_objects = \
+                s3.list_objects_v2(Bucket=BUCKET, Prefix=path[3:], Delimiter='/', \
+                                   ContinuationToken=ls_objects['NextContinuationToken'])
+                final_list += \
+                [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
+        # List will contain paths like ['example/patient.pickle', ...],
+        # we only want patients.pickle, not images or other files
+        return final_list
