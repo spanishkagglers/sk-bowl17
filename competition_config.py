@@ -246,7 +246,7 @@ def batch_to_process(input_path, output_path, aws=False, input_has_folders=False
     if input_has_folders:
         if aws:
             patients = read_from_s3(input_path, True)
-            processed = read_from_s3(output_path)
+            processed = [p.split('.')[0] for p in read_from_s3(output_path) if p.endswith('.pickle')]
         else:
             patients = os.listdir(input_path)
             processed = [p.split('.')[0] for p in os.listdir(output_path) if p.endswith('.pickle')]
