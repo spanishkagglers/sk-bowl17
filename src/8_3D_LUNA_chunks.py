@@ -59,6 +59,8 @@ def save_LUNA_chunks(subfolder):
         img_file = LUNAid + ".pickle"
         if os.path.isfile(input_subfolder + img_file):
             image_rows = origin_of_images[origin_of_images['seriesuid']==LUNAid]
+            if len(image_rows) == 0:
+                print("In Origin of Images could not find image", LUNAid, ". Some error in csv", ORIGIN_OF_IMAGES_FILE)
             image_row = next(image_rows.iterrows())[1] # returns (index, row); [1] is row
             numpyImage = load_LUNA_resized_image(input_subfolder + img_file)
             numpyOrigin = np.array([image_row.origin_z, image_row.origin_y, image_row.origin_x])
