@@ -318,7 +318,9 @@ def read_from_s3(path, input_is_folder=False):
         truncated = ls_objects['IsTruncated']
         cont_token = ls_objects.get('NextContinuationToken')
         i = 0
-        while truncated or i<5:
+        while truncated:
+            i += 1
+            if i > 5: break
             next_ls_objects = \
             s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/', \
                                ContinuationToken=cont_token)
@@ -336,8 +338,9 @@ def read_from_s3(path, input_is_folder=False):
         truncated = ls_objects['IsTruncated']
         cont_token = ls_objects.get('NextContinuationToken')
         i = 0
-        while truncated or i<5:
+        while truncated:
             i += 1
+            if i > 5: break
             next_ls_objects = \
             s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, \
                                ContinuationToken=cont_token)
