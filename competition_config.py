@@ -7,7 +7,7 @@ Created on Sat Feb 18 18:37:58 2017
 
 global COMPETITION_HOME, COMPETITION_DATASET_DIRECTORY
 
-AWS = True # To download form and upload to the AWS S3 bucket
+AWS = False # To download form and upload to the AWS S3 bucket
 
 # All routes must be ended by /
 
