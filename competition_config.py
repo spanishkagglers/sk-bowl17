@@ -7,7 +7,7 @@ Created on Sat Feb 18 18:37:58 2017
 
 global COMPETITION_HOME, COMPETITION_DATASET_DIRECTORY
 
-AWS = False # To download form and upload to the AWS S3 bucket
+AWS = True # To download form and upload to the AWS S3 bucket
 
 # All routes must be ended by /
 
@@ -315,28 +315,38 @@ def read_from_s3(path, input_is_folder=False):
         # We only want subfolders with dicoms, not dicoms, using '/' Delimiter
         ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/')
         final_list = [f.get('Prefix').split('/')[1] for f in ls_objects['CommonPrefixes']]
-        # If there are more than 1000 and less than 2000 files/folders
-        if ls_objects['IsTruncated']:
+        # If there are more than 1000 files/folders, break after 5 iterations
+        truncated = ls_objects['IsTruncated']
+        cont_token = ls_objects.get('NextContinuationToken')
+        i = 0
+        while truncated or i<5:
             next_ls_objects = \
             s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, Delimiter='/', \
-                               ContinuationToken=ls_objects['NextContinuationToken'])
+                               ContinuationToken=cont_token)
             final_list += \
             [f.get('Prefix').split('/')[1] for f in next_ls_objects['CommonPrefixes']]
-        # List will contain paths like ['example/patient/', ...], we only want patient
-        return final_list 
-    
+            truncated = next_ls_objects['IsTruncated']
+            cont_token = next_ls_objects.get('NextContinuationToken')
+            # List will contain paths like ['example/patient/', ...], we only want patient
+
     else:
         ls_objects = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path)
         final_list = [p['Key'].split('/')[-1] for p in ls_objects['Contents'] \
                       if p['Key'].split('/')[-1].endswith('.pickle')]
-        # If there are more than 1000 and less than 2000 files/folders
-        if ls_objects['IsTruncated']:
-                next_ls_objects = \
-                s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, \
-                                   ContinuationToken=ls_objects['NextContinuationToken'])
-                final_list += \
-                [p['Key'].split('/')[-1] for p in next_ls_objects['Contents'] \
-                      if p['Key'].split('/')[-1].endswith('.pickle')]
-        # List will contain paths like ['example/patient.pickle', ...],
-        # we only want patients.pickle, not images or other files
-        return final_list
+        # If there are more than 1000 files/folders, break after 5 iterations
+        truncated = ls_objects['IsTruncated']
+        cont_token = ls_objects.get('NextContinuationToken')
+        i = 0
+        while truncated or i<5:
+            i += 1
+            next_ls_objects = \
+            s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_path, \
+                               ContinuationToken=cont_token)
+            final_list += \
+            [p['Key'].split('/')[-1] for p in next_ls_objects['Contents'] \
+             if p['Key'].split('/')[-1].endswith('.pickle')]
+            truncated = next_ls_objects['IsTruncated']
+            cont_token = next_ls_objects.get('NextContinuationToken')
+            # List will contain paths like ['example/patient.pickle', ...],
+            # we only want patients.pickle, not images or other files
+    return final_list
