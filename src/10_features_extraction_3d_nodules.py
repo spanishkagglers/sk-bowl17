@@ -17,7 +17,6 @@ start_time = time.time()
 
 import sys
 sys.path.append("../")
-# Import our competition variables, has to be before matplotlib
 from competition_config import *
 d=features_extraction_nodules_3d
 
@@ -108,6 +107,24 @@ def WriteDictToCSV(csv_file,csv_columns,dict_data):
             writer.writerow(data)
     return     
 
+def num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,nodule_mass_radius,f,n):
+    # f factor division del radio
+    # n^2 el número de puntos del grid de la esfera
+
+    z2i,y2i,x2i = np.round(sphGrid2cartGrid(n,nodule_mass_radius/f,nodule_geo_center[0],nodule_geo_center[1],nodule_geo_center[2]),0)
+    sphere_grid_coords=[]
+    for i in range(n):
+        for j in range(n):
+            sphere_grid_coords.append([z2i[i,j],y2i[i,j],x2i[i,j]])           
+    sphere_grid_coords = np.array(sphere_grid_coords)
+    
+    cont=0
+    for ni in range(nod_coords.shape[0]):
+        if(any(np.equal(sphere_grid_coords,nod_coords[ni]).all(1))):
+            cont=cont+1
+    return cont
+
+
 
 file_list=glob(d['INPUT_DIRECTORY_1']+"*.pickle")
 
@@ -121,15 +138,15 @@ for input_filename in tqdm(file_list):
         nodules_info = read_segmented_nodules_info(ct_scan_id, d)
         nodules_coords = read_segmented_nodules_coords(ct_scan_id, d)
         
+
         features = []
         for nod in nodules_info:
-            
             zmin = nod['min_z']; zmax = nod['max_z']
             ymin = nod['min_y']; ymax = nod['max_y']
             xmin = nod['min_x']; xmax = nod['max_x']
             
             nod_coords_dict = nodules_coords[nod['id_nodule']]
-            nodule_values_array = roi[nod_coords_dict['z'],nod_coords_dict['y'],nod_coords_dict['x']]
+            nodule_values_array = roi[nod_coords_dict['z'],nod_coords_dict['y'],nod_coords_dict['x']]-1000
             nodule_volume = len(nodule_values_array)
             
             nodule_mass_radius = nod['radius']
@@ -139,17 +156,34 @@ for input_filename in tqdm(file_list):
             
             roiGC_to_noduleGC_vector = nodule_geo_center-roi_geo_center
             
-            # coordenadas de 100 puntos de una esfera radio=radius/2
-            # z2i,y2i,x2i = np.round(sphGrid2cartGrid(10,nodule_mass_radius/2,nodule_geo_center[0],nodule_geo_center[1],nodule_geo_center[2]),0)
-            # nod_coords = np.concatenate(([nod_coords_dict['z']],[nod_coords_dict['y']],[nod_coords_dict['x']]),axis=0).T
+            nodule_cuboid_2 = roi[max([0,int(nodule_geo_center[0]-2)]):max([0,int(nodule_geo_center[0]+3)]),
+                                    max([0,int(nodule_geo_center[1]-2)]):max([0,int(nodule_geo_center[1]+3)]),
+                                    max([0,int(nodule_geo_center[2]-2)]):max([0,int(nodule_geo_center[2]+3)])]
+            
+            nodule_cuboid_2 = nodule_cuboid_2[nodule_cuboid_2>0]
+            
+            nodule_cuboid_4 = roi[max([0,int(nodule_geo_center[0]-4)]):max([0,int(nodule_geo_center[0]+5)]),
+                                    max([0,int(nodule_geo_center[1]-4)]):max([0,int(nodule_geo_center[1]+5)]),
+                                    max([0,int(nodule_geo_center[2]-4)]):max([0,int(nodule_geo_center[2]+5)])]
+          
+            nodule_cuboid_4 = nodule_cuboid_4[nodule_cuboid_4>0]
+            
+            nodule_cuboid_8 = roi[max([0,int(nodule_geo_center[0]-8)]):max([0,int(nodule_geo_center[0]+9)]),
+                                    max([0,int(nodule_geo_center[1]-8)]):max([0,int(nodule_geo_center[1]+9)]),
+                                    max([0,int(nodule_geo_center[2]-8)]):max([0,int(nodule_geo_center[2]+9)])]
+            
+            nodule_cuboid_8 = nodule_cuboid_8[nodule_cuboid_8>0]
+            
+            nod_coords = np.concatenate(([nod_coords_dict['z']],[nod_coords_dict['y']],[nod_coords_dict['x']]),axis=0).T
 
+            #np.percentile(nodule_values_array,10)
             
             '''
             from matplotlib import pyplot as plt
             from mpl_toolkits.mplot3d import axes3d
             zi,yi,xi = np.round(sphGrid2cartGrid(10,100,500,0,0),0)
             fig, ax = plt.subplots(1, 1, subplot_kw={'projection':'3d', 'aspect':'equal'})
-            ax.plot_wireframe(x, y, z, color='k', rstride=1, cstride=1)
+            ax.plot_wireframe(xi, yi, zi, color='k', rstride=1, cstride=1)
             ax.scatter(xi, yi, zi, s=10, c='r', zorder=10)
             '''
             
@@ -168,7 +202,7 @@ for input_filename in tqdm(file_list):
             
             roi_values_array = roi[roi>0]
             
-
+            
             features.append({
             'ct_scan_id':nod['ct_scan_id'],
             'id':nod['id_nodule'],
@@ -184,7 +218,26 @@ for input_filename in tqdm(file_list):
             'nod_hu_mode': np.asscalar(stats.mode(nodule_values_array)[0]),
             'nod_hu_mean_vs_cuboid_hu_mean':np.mean(nodule_values_array)/np.mean(cuboid_nodules_array),
             'nod_hu_mean_vs_roi_hu_mean':np.mean(nodule_values_array)/np.mean(roi_values_array),
+            'nod_lung_ratio': len(nodule_values_array[(nodule_values_array>=-949) & (nodule_values_array<=-120)])/nodule_volume,
+            'nod_lung_ratio_90':len(nodule_values_array[(nodule_values_array>=-949) & (nodule_values_array<=-900)])/nodule_volume,
+            'nod_lung_ratio_85':len(nodule_values_array[(nodule_values_array>=-899) & (nodule_values_array<=-850)])/nodule_volume,
+            'nod_lung_ratio_80':len(nodule_values_array[(nodule_values_array>=-849) & (nodule_values_array<=-800)])/nodule_volume,
+            'nod_lung_ratio_75':len(nodule_values_array[(nodule_values_array>=-799) & (nodule_values_array<=-750)])/nodule_volume,
+            'nod_lung_ratio_70':len(nodule_values_array[(nodule_values_array>=-749) & (nodule_values_array<=-700)])/nodule_volume,
+            'nod_lung_ratio_65':len(nodule_values_array[(nodule_values_array>=-699) & (nodule_values_array<=-650)])/nodule_volume,
+            'nod_lung_ratio_60':len(nodule_values_array[(nodule_values_array>=-649) & (nodule_values_array<=-600)])/nodule_volume,
+            'nod_lung_ratio_55':len(nodule_values_array[(nodule_values_array>=-599) & (nodule_values_array<=-550)])/nodule_volume,
+            'nod_lung_ratio_50':len(nodule_values_array[(nodule_values_array>=-549) & (nodule_values_array<=-500)])/nodule_volume,
+            'nod_lung_ratio_45':len(nodule_values_array[(nodule_values_array>=-499) & (nodule_values_array<=-450)])/nodule_volume,
+            'nod_lung_ratio_40':len(nodule_values_array[(nodule_values_array>=-449) & (nodule_values_array<=-400)])/nodule_volume,
+            'nod_lung_ratio_35':len(nodule_values_array[(nodule_values_array>=-399) & (nodule_values_array<=-350)])/nodule_volume,
+            'nod_lung_ratio_30':len(nodule_values_array[(nodule_values_array>=-349) & (nodule_values_array<=-300)])/nodule_volume,
+            'nod_lung_ratio_25':len(nodule_values_array[(nodule_values_array>=-299) & (nodule_values_array<=-250)])/nodule_volume,
+            'nod_lung_ratio_20':len(nodule_values_array[(nodule_values_array>=-249) & (nodule_values_array<=-200)])/nodule_volume,
+            'nod_lung_ratio_15':len(nodule_values_array[(nodule_values_array>=-199) & (nodule_values_array<=-150)])/nodule_volume,
+            'nod_lung_ratio_10':len(nodule_values_array[(nodule_values_array>=-149) & (nodule_values_array<=-100)])/nodule_volume,
             'nod_fat_ratio':len(nodule_values_array[(nodule_values_array>=-100) & (nodule_values_array<=-50)])/nodule_volume,
+            'nod_water_ratio':len(nodule_values_array[nodule_values_array==0])/nodule_volume,
             'nod_csf_ratio':len(nodule_values_array[nodule_values_array==15])/nodule_volume,
             'nod_kidney_ratio':len(nodule_values_array[nodule_values_array==30])/nodule_volume,
             'nod_blood_ratio':len(nodule_values_array[(nodule_values_array>=30) & (nodule_values_array<=45)])/nodule_volume,
@@ -207,17 +260,50 @@ for input_filename in tqdm(file_list):
             'nod_xcenter_xcenterRoi_ratio': nodule_geo_center[2]/roi.shape[2],
             'nod_ycenter_ycenterRoi_ratio': nodule_geo_center[1]/roi.shape[1],
             'nod_zcenter_zcenterRoi_ratio': nodule_geo_center[0]/roi.shape[0],
+            'nod_sph_intersect_radiusNod1':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,nodule_mass_radius,1.5,10),
+            'nod_sph_intersect_radiusNod2':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,nodule_mass_radius,2,10),
+            'nod_sph_intersect_radiusNod4':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,nodule_mass_radius,4,10),
+            'nod_sph_intersect_radius2':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,2,1,10),
+            'nod_sph_intersect_radius4':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,4,1,10),
+            'nod_sph_intersect_radius8':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,8,1,10),
+            'nod_sph_intersect_radius16':num_points_nod_and_sphere_intersection(nod_coords,nodule_geo_center,16,1,10),
+            'nod_cuboid_2_hu_mean':np.mean(nodule_cuboid_2),
+            'nod_cuboid_4_hu_mean':np.mean(nodule_cuboid_4),
+            'nod_cuboid_8_hu_mean':np.mean(nodule_cuboid_8),
+            'nod_cuboid_2_hu_sd':np.std(nodule_cuboid_2),
+            'nod_cuboid_4_hu_sd':np.std(nodule_cuboid_4),
+            'nod_cuboid_8_hu_sd':np.std(nodule_cuboid_8),
+            'nod_cuboid_4_vs_2_hu_mean':np.mean(nodule_cuboid_4)/np.mean(nodule_cuboid_2),
+            'nod_cuboid_8_vs_2_hu_mean':np.mean(nodule_cuboid_8)/np.mean(nodule_cuboid_2),
+            'raw_nod_center_z':nodule_geo_center[0],
+            'raw_nod_center_y':nodule_geo_center[1],
+            'raw_nod_center_x':nodule_geo_center[2],
+            'raw_roi_center_z':roi_geo_center[0],
+            'raw_roi_center_y':roi_geo_center[1],
+            'raw_roi_center_x':roi_geo_center[2],
+            'raw_nod_masscenter_z':nod['center'][2],
+            'raw_nod_masscenter_y':nod['center'][1],
+            'raw_nod_masscenter_x':nod['center'][0],
+            'raw_cuboid_zmin':zmin,
+            'raw_cuboid_zmax':zmax,
+            'raw_cuboid_ymin':ymin,
+            'raw_cuboid_ymax':ymax,
+            'raw_cuboid_xmin':xmin,
+            'raw_cuboid_xmax':xmax,
+            'raw_roi_zmax':roi.shape[0]-1,
+            'raw_roi_ymax':roi.shape[1]-1,
+            'raw_roi_xmax':roi.shape[2]-1,
             })
+    
+
     
         with open(output_filename, 'wb') as handle:
             output_filename=d['OUTPUT_DIRECTORY'] + ct_scan_id + ".pickle"
             pickle.dump(features, handle, protocol=PICKLE_PROTOCOL)
-            if AWS: upload_to_s3(output_filename)
         
         csv_columns=sorted(list(features[0].keys()))
         csv_file = d['OUTPUT_DIRECTORY'] + ct_scan_id + ".csv"
         WriteDictToCSV(csv_file,csv_columns,features)
-        if AWS: upload_to_s3(csv_file)
             
         
 print("Ellapsed time: {} seconds".format((time.time() - start_time)))
