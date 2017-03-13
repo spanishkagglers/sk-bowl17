@@ -174,6 +174,12 @@ for input_filename in tqdm(file_list):
             
             nodule_cuboid_8 = nodule_cuboid_8[nodule_cuboid_8>0]
             
+            nodule_cuboid_16 = roi[max([0,int(nodule_geo_center[0]-16)]):max([0,int(nodule_geo_center[0]+17)]),
+                                    max([0,int(nodule_geo_center[1]-16)]):max([0,int(nodule_geo_center[1]+17)]),
+                                    max([0,int(nodule_geo_center[2]-16)]):max([0,int(nodule_geo_center[2]+17)])]
+            
+            nodule_cuboid_16 = nodule_cuboid_16[nodule_cuboid_16>0]
+            
             nod_coords = np.concatenate(([nod_coords_dict['z']],[nod_coords_dict['y']],[nod_coords_dict['x']]),axis=0).T
 
             #np.percentile(nodule_values_array,10)
@@ -270,11 +276,17 @@ for input_filename in tqdm(file_list):
             'nod_cuboid_2_hu_mean':np.mean(nodule_cuboid_2),
             'nod_cuboid_4_hu_mean':np.mean(nodule_cuboid_4),
             'nod_cuboid_8_hu_mean':np.mean(nodule_cuboid_8),
+            'nod_cuboid_16_hu_mean':np.mean(nodule_cuboid_16),
             'nod_cuboid_2_hu_sd':np.std(nodule_cuboid_2),
             'nod_cuboid_4_hu_sd':np.std(nodule_cuboid_4),
             'nod_cuboid_8_hu_sd':np.std(nodule_cuboid_8),
+            'nod_cuboid_16_hu_sd':np.std(nodule_cuboid_16),
             'nod_cuboid_4_vs_2_hu_mean':np.mean(nodule_cuboid_4)/np.mean(nodule_cuboid_2),
             'nod_cuboid_8_vs_2_hu_mean':np.mean(nodule_cuboid_8)/np.mean(nodule_cuboid_2),
+            'nod_cuboid_16_vs_2_hu_mean':np.mean(nodule_cuboid_16)/np.mean(nodule_cuboid_2),
+            'nod_cuboid_8_vs_4_hu_mean':np.mean(nodule_cuboid_8)/np.mean(nodule_cuboid_4),
+            'nod_cuboid_16_vs_4_hu_mean':np.mean(nodule_cuboid_16)/np.mean(nodule_cuboid_4),
+            'nod_cuboid_16_vs_8_hu_mean':np.mean(nodule_cuboid_16)/np.mean(nodule_cuboid_8),
             'raw_nod_center_z':nodule_geo_center[0],
             'raw_nod_center_y':nodule_geo_center[1],
             'raw_nod_center_x':nodule_geo_center[2],
