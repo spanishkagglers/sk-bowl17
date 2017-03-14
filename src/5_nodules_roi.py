@@ -157,10 +157,11 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
                 print('Done in ' + \
                       str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
 
-            except ValueError:
-                print(patient + ' patient rised a ValueError! Continuing...')
-            except IndexError:
-                print(patient + ' patient rised an IndexError! Continuing...')
+            except KeyboardInterrupt:
+                quit()
+            except:
+                print(patient + ' patient rised a %s Continuing...' % sys.exc_info()[0])
+
 
 # Turn to True to save a 3D segmented nodule image
 get_nodules_all_segmented_ct_scans(D5['INPUT_DIRECTORY'], D5['OUTPUT_DIRECTORY'], False)

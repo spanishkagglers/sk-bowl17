@@ -139,6 +139,8 @@ def resize_all_ct_scans(input_path, output_path): # Iterate through all patients
                 print('Done in ' + \
                     str(time.strftime('%H:%M:%S', time.gmtime(i_time))))
 
+            except KeyboardInterrupt:
+                quit()
             except:
                 print(patient + ' patient rised a %s Continuing...' % sys.exc_info()[0])
 
