@@ -194,6 +194,10 @@ chunks_extraction={
 #
 DSB_ANN_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
 
+augment = {
+    'INPUT_DIRECTORY' : '../ANN64/',
+    'OUTPUT_DIRECTORY' : '../ANN64rot/',
+}
 
 ####################### 10 - Features Extraction Nodules 3D
 #
