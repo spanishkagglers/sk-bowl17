@@ -24,17 +24,8 @@ sys.path.append("../")
 # Import our competition variables, has to be before matplotlib
 from competition_config import *
 D1 = arnavs_lugns_roi_dashboard
-
 import matplotlib.pyplot as plt
 
-
-START_TIME = time.time()
-
-if not os.path.exists(D1['OUTPUT_DIRECTORY']):
-    os.makedirs(D1['OUTPUT_DIRECTORY'])
-
-# Input data files are available in the D1['INPUT_DIRECTORY'].
-# Any results you write has to be saved in the D1['OUTPUT_DIRECTORY'].
 
 def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
@@ -44,7 +35,7 @@ def plot_ct_scan(scan):
 
 
 def get_segmented_lungs(image, plot=False):
-    # This funtion segments the lungs from the given 2D slice
+    '''Segment the lungs from the given 2D slice'''
 
     if plot:
         f, plots = plt.subplots(8, 1, figsize=(5, 40))
@@ -129,7 +120,8 @@ def segment_lung_from_ct_scan(ct_scan):
     return np.asarray([get_segmented_lungs(slice) for slice in ct_scan])
 
 
-def segment_all_ct_scans(input_path, output_path, image): # Iterate through all pickles
+def segment_all_ct_scans(input_path, output_path, image):
+    '''Iterate through all pickles'''
     # Initialize lenght of previus batch to not iterate through errors
     patients = []
     while True:
@@ -181,8 +173,15 @@ def segment_all_ct_scans(input_path, output_path, image): # Iterate through all 
             except:
                 print(patient + ' patient rised a %s Continuing...' % sys.exc_info()[0])
 
-# Turn to False to not save an image with slices and binary mask superimposed
-segment_all_ct_scans(D1['INPUT_DIRECTORY'], D1['OUTPUT_DIRECTORY'], True)
+if __name__ == "__main__":
+    if not os.path.exists(D1['OUTPUT_DIRECTORY']):
+    os.makedirs(D1['OUTPUT_DIRECTORY'])
+    # Input data files are available in the D1['INPUT_DIRECTORY'].
+    # Any results you write has to be saved in the D1['OUTPUT_DIRECTORY'].
+    
+    START_TIME = time.time()
+    # Turn to False to not save an image with slices and binary mask superimposed
+    segment_all_ct_scans(D1['INPUT_DIRECTORY'], D1['OUTPUT_DIRECTORY'], True)
 
-print("Total elapsed time: " + \
-      str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
+    print("Total elapsed time: " + \
+          str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
