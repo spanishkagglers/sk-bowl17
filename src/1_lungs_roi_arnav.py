@@ -175,7 +175,7 @@ def segment_all_ct_scans(input_path, output_path, image):
 
 if __name__ == "__main__":
     if not os.path.exists(D1['OUTPUT_DIRECTORY']):
-    os.makedirs(D1['OUTPUT_DIRECTORY'])
+        os.makedirs(D1['OUTPUT_DIRECTORY'])
     # Input data files are available in the D1['INPUT_DIRECTORY'].
     # Any results you write has to be saved in the D1['OUTPUT_DIRECTORY'].
     
