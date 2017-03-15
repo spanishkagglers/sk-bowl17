@@ -47,7 +47,7 @@ def rotate90(chunk, name, axis, show):
         if show: plt_chunk(rot_chunk)
         #print('Rotation', rotations[rot])
 
-def rotate_chunk(chunk, name, show):
+def rotate_chunk(chunk, name, show=False):
     '''If you were lyin in a bed, you would rotate 4 times facing each
     wall of the room, floor and celling. Rotations are like head to left shoulder
     z = head to feet, x = left to right, y = back to chest'''
