@@ -21,16 +21,8 @@ sys.path.append("../")
 # Import our competition variables, has to be before matplotlib
 from competition_config import *
 D5 = nodules_roi_dashboard
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-START_TIME = time.time()
-
-if not os.path.exists(D5['OUTPUT_DIRECTORY']):
-    os.makedirs(D5['OUTPUT_DIRECTORY'])
-
-# Input data files are available in the D5['INPUT_DIRECTORY'].
-# Any results you write has to be saved in the D5['OUTPUT_DIRECTORY'].
 
 
 def plot_ct_scan(scan):
@@ -162,9 +154,15 @@ def get_nodules_all_segmented_ct_scans(input_path, output_path, image): # Iterat
             except:
                 print(patient + ' patient rised a %s Continuing...' % sys.exc_info()[0])
 
+if __name__ == "__main__":
+    if not os.path.exists(D5['OUTPUT_DIRECTORY']):
+        os.makedirs(D5['OUTPUT_DIRECTORY'])
+    # Input data files are available in the D5['INPUT_DIRECTORY']
+    # Any results you write has to be saved in the D5['OUTPUT_DIRECTORY']
+    
+    START_TIME = time.time()
+    # Turn to True to save a 3D segmented nodule image, it takes its time
+    get_nodules_all_segmented_ct_scans(D5['INPUT_DIRECTORY'], D5['OUTPUT_DIRECTORY'], False)
 
-# Turn to True to save a 3D segmented nodule image
-get_nodules_all_segmented_ct_scans(D5['INPUT_DIRECTORY'], D5['OUTPUT_DIRECTORY'], False)
-
-print("Total elapsed time: " + \
-      str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
+    print("Total elapsed time: " + \
+          str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
