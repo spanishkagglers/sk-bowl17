@@ -6,6 +6,8 @@ Created on Sat Mar 11 20:06:37 2017
 @author: spanish kagglers
 """
 
+CHUNK_VARIATION_SEP="#"
+
 import sys
 import os
 import time
@@ -43,7 +45,7 @@ def rotate90(chunk, name, axis, show):
     #print('rotate90', name)
     for rot in range(4):
         rot_chunk = np.rot90(chunk, rot, axis)
-        save_chunk(rot_chunk, name+'_'+rotations[rot])
+        save_chunk(rot_chunk, name+'_'+rotations[rot] + ".pickle")
         if show: plt_chunk(rot_chunk)
         #print('Rotation', rotations[rot])
 
@@ -54,23 +56,23 @@ def rotate_chunk(chunk, name, show=False):
 
     # Patient is lying looking at the celling 'y' (original position)
     # Rotate bed clockwise
-    rotate90(chunk, name+'_y', (0,2), show)
+    rotate90(chunk, name+CHUNK_VARIATION_SEP+'y', (0,2), show)
     # Turn upside down looking at the floor '-y' and rotate bed clockwise
-    rotate90(np.rot90(chunk, 2, (2,1)), name+'_-y', (2,0), show)
+    rotate90(np.rot90(chunk, 2, (2,1)), name+CHUNK_VARIATION_SEP+'-y', (2,0), show)
     # Patient get out of bed on the right side of bed, standing up
     chunk = np.rot90(chunk, 1, (1,0)) # rises
     chunk = np.rot90(chunk, 1, (0,2)) # now right side of bed
     # Patient does a cart-wheel!
-    rotate90(chunk, name+'_x', (1,0), show)
+    rotate90(chunk, name+CHUNK_VARIATION_SEP+'x', (1,0), show)
     # Turns around and another cart-wheel
-    rotate90(np.rot90(chunk, 2, (2,0)), name+'_-x', (0,1), show)
+    rotate90(np.rot90(chunk, 2, (2,0)), name+CHUNK_VARIATION_SEP+'-x', (0,1), show)
     # Patient, standing up on the right of the bed, now faces the end of bed
     # The bed can be touched by his/her left hand
     chunk = np.rot90(chunk, 1, (2,0))
     # Cart-wheeh! (removing the bed so it does not interfere)
-    rotate90(chunk, name+'_z', (2,1), show)
+    rotate90(chunk, name+CHUNK_VARIATION_SEP+'z', (2,1), show)
     # Turns around and another cart-wheel
-    rotate90(np.rot90(chunk, 2, (2,0)), name+'_-z', (1,2), show)
+    rotate90(np.rot90(chunk, 2, (2,0)), name+CHUNK_VARIATION_SEP+'-z', (1,2), show)
 
 def rotate_all_chunks(input_path, output_path, show=False):
     '''Rotate all input directory chunks and save them on output directory'''
