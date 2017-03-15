@@ -167,7 +167,9 @@ nodules_info_csv_from_step_7={
 
 ####################### 8 - 3D chunks extraction
 #
-CHUNK_SIDE = 64
+CHUNK_SIDE = 24
+NEW_ANN_DIAMETER = 15.0
+DIST_TH2 = 5**2 # hay ann y ann_ex de LUNA que son el mismo nodulo en distintos algoritmos; dist**2 < DIST_TH2
 
 #LUNA_PREFIX = "ANN" # LUNA Annotations
 LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
@@ -187,12 +189,26 @@ chunks_extraction={
     'ANN_CSV_FILE': LUNA_ANN_CSV_FILE_PATH,
     'OUTPUT_ANN_IMG_DIR' : LUNA_ANN,
     'SUBFOLDERS' : LUNA_SUBFOLDERS,
-    'ORIGIN_OF_IMAGES_FILE': LUNA_ORIGIN_OF_IMAGES_FILE
+    'ORIGIN_OF_IMAGES_FILE': LUNA_ORIGIN_OF_IMAGES_FILE,
+    'NEW_ANN_DIAMETER' : NEW_ANN_DIAMETER,
+    'DIST_TH2' : DIST_TH2
 }
 
 ####################### 8 - 3D DSB chunks extraction
 #
-DSB_ANN_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
+#DSB_CANDS_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
+DSB_CANDS_CSV_FILE = COMPETITION_HOME + 'output/step-7-nodules.pickle'
+NEW_CAND_DIAMETER = 15.0
+
+chunks_DSB_extraction={
+    'INPUT_DIRECTORY' : resize_dashboard['OUTPUT_DIRECTORY'],
+    'INPUT_METADATA' : DSB_CANDS_CSV_FILE,
+    'CHUNK_DIMS': (CHUNK_SIDE, CHUNK_SIDE, CHUNK_SIDE),
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Chunks_for_CNN/',
+    'NEW_CAND_DIAMETER' : NEW_CAND_DIAMETER,
+    'DIST_TH2' : DIST_TH2
+}
+
 
 augment = {
     'INPUT_DIRECTORY' : '../ANN24/',
