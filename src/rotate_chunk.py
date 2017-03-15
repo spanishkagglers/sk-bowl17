@@ -46,7 +46,7 @@ def rotate_chunk(chunk, name):
     '''If you were lyin in a bed, you would rotate 4 times facing each
     wall of the room, floor and celling. Rotations are like head to left shoulder
     z = head to feet, x = left to right, y = back to chest'''
-    
+
     # Patient is lying looking at the celling 'y' (original position)
     # Rotate bed clockwise
     rotate90(chunk, name+['y'], (0,2))
@@ -68,23 +68,26 @@ def rotate_chunk(chunk, name):
     rotate90(np.rot90(chunk, 2, (2,0)), name+['-z'], (1,2))
 
 def rotate_all_chunks(input_path, output_path):
-    
+    '''Rotate all input directory chunks and save them on output directory'''
     if not os.path.exists(augment['OUTPUT_DIRECTORY']):
         os.makedirs(augment['OUTPUT_DIRECTORY'])
     if not os.path.exists(augment['INPUT_DIRECTORY']):
         os.makedirs(augment['INPUT_DIRECTORY'])
-    
+
     chunks = os.listdir(input_path)
-    
+
     for c in chunks:
         with open(augment['INPUT_DIRECTORY'] + c, 'rb') as handle:
-            # ANN pickles throw an ascii compatibility issue, encoding has to be latin1
+            # ANN LUNA pickles throw ascii compatibility issues, encoding has to be latin1
             chunk = pickle.load(handle, encoding='latin1')
-        
+        # Chunk name has to be a list, we use the text before .pickle
         rotate_chunk(chunk, [c.split('.')[0]])
-    
-
-rotate_all_chunks(augment['INPUT_DIRECTORY'], augment['OUTPUT_DIRECTORY'])
 
 
+if __name__ == "__main__":
+    START_TIME = time.time()
 
+    rotate_all_chunks(augment['INPUT_DIRECTORY'], augment['OUTPUT_DIRECTORY'])
+
+    print('Total elapsed time: ' + \
+          str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
