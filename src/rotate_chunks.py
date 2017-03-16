@@ -33,7 +33,7 @@ def plt_chunk(chunk):
     plt.show()
 
 def save_chunk(chunk, name):
-    '''Save chunk with name like [name, 'axis', rotation] = name_axis_rotation'''
+    '''Save chunk with name like name_CHUNK_VARIATION_SEP_axis_rotation'''
     output = augment['OUTPUT_DIRECTORY'] + name
     with open(output, 'wb') as handle:
         pickle.dump(chunk, handle, protocol=PICKLE_PROTOCOL)
