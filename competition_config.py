@@ -199,6 +199,7 @@ chunks_extraction={
 #DSB_CANDS_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
 DSB_CANDS_CSV_FILE = COMPETITION_HOME + 'output/step-7-nodules.pickle'
 NEW_CAND_DIAMETER = 15.0
+DIAM_TH = 50
 
 chunks_DSB_extraction={
     'INPUT_DIRECTORY' : resize_dashboard['OUTPUT_DIRECTORY'],
@@ -206,7 +207,8 @@ chunks_DSB_extraction={
     'CHUNK_DIMS': (CHUNK_SIDE, CHUNK_SIDE, CHUNK_SIDE),
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Chunks_for_CNN/',
     'NEW_CAND_DIAMETER' : NEW_CAND_DIAMETER,
-    'DIST_TH2' : DIST_TH2
+    'DIST_TH2' : DIST_TH2,
+    'DIAM_TH', DIAM_TH
 }
 
 
