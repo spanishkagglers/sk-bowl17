@@ -208,7 +208,7 @@ chunks_DSB_extraction={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Chunks_for_CNN/',
     'NEW_CAND_DIAMETER' : NEW_CAND_DIAMETER,
     'DIST_TH2' : DIST_TH2,
-    'DIAM_TH', DIAM_TH
+    'DIAM_TH': DIAM_TH
 }
 
 
