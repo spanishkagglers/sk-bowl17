@@ -94,6 +94,13 @@ def rotate_all_chunks(input_path, output_path, show=False):
 if __name__ == "__main__":
     START_TIME = time.time()
     # Turn show to True to plot rotations
+    
+    print("Starting LUNA chunks 90 degrees rotations")
+    augment=augment_luna
+    rotate_all_chunks(augment['INPUT_DIRECTORY'], augment['OUTPUT_DIRECTORY'], show=False)
+    
+    print("Starting DS BOWL 2017 chunks 90 degrees rotations")
+    augment=augment_dsbowl
     rotate_all_chunks(augment['INPUT_DIRECTORY'], augment['OUTPUT_DIRECTORY'], show=False)
 
     print('Total elapsed time: ' + \

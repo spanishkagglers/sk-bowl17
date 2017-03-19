@@ -9,9 +9,12 @@ global COMPETITION_HOME, COMPETITION_DATASET_DIRECTORY
 
 AWS = False # To download form and upload to the AWS S3 bucket
 
+RANDOM_SEED = 1234
 # All routes must be ended by /
 
 COMPETITION_HOME = '../'
+
+CHUNK_VARIATION_SEP="#"
 
 COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 # Comment previous and uncomment to use sample_images or mini_stage1 folders for testing
@@ -21,6 +24,8 @@ COMPETITION_DATASET_DIRECTORY = COMPETITION_HOME + 'stage1/'
 import pickle
 # Used protocol 2 but there were coding ascii errors. Similar processing time 2 vs 4
 PICKLE_PROTOCOL = pickle.HIGHEST_PROTOCOL # protocol 4
+
+import datetime
 
 ####################### 0 - RESIZE DICOMS
 #
@@ -205,16 +210,24 @@ chunks_DSB_extraction={
     'INPUT_DIRECTORY' : resize_dashboard['OUTPUT_DIRECTORY'],
     'INPUT_METADATA' : DSB_CANDS_CSV_FILE,
     'CHUNK_DIMS': (CHUNK_SIDE, CHUNK_SIDE, CHUNK_SIDE),
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Chunks_for_CNN/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/8B-1_Chunks_for_CNN/',
     'NEW_CAND_DIAMETER' : NEW_CAND_DIAMETER,
     'DIST_TH2' : DIST_TH2,
     'DIAM_TH': DIAM_TH
 }
 
+####################### 9 - 3D nodules Augmentation 
+#
 
-augment = {
-    'INPUT_DIRECTORY' : '../ANN24/',
-    'OUTPUT_DIRECTORY' : '../ANN24rot/',
+augment_luna = {
+    'INPUT_DIRECTORY' : '../ANN24/', #'../luna/ANN24/',
+    'OUTPUT_DIRECTORY' : '../ANN24rot/', #'../luna/ANN24rot/',
+}
+
+
+augment_dsbowl = {
+    'INPUT_DIRECTORY' : chunks_DSB_extraction['OUTPUT_DIRECTORY'],
+    'OUTPUT_DIRECTORY' :  COMPETITION_HOME + 'output/8B-2_augmented-chunks_for_CNN/',
 }
 
 ####################### 10 - Features Extraction Nodules 3D
@@ -241,6 +254,51 @@ features_extraction_lungs_3d={
     'INPUT_DIRECTORY'  : features_extraction_nodules_3d['OUTPUT_DIRECTORY'],
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/13_features_extraction_lungs/',
 }
+
+
+####################### 14 - Nodule 3D classifier
+#
+# 
+# 
+
+global nodule_3D_classifier
+
+nodule_3D_classifier={
+#    'INPUT_LUNA_AFFECTED_NODULES' : '../luna-chunks/ANN64may2cm/',
+#    'INPUT_LUNA_HEALTHY_NODULES' : '../luna-chunks/ANN64men2cm/',
+    'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
+    'LUNA_INPUT_DIRECTORY' : '../luna/ANN24/',
+    'BOWL_INPUT_DIRECTORY' : COMPETITION_HOME + 'output/8B/',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Nodule_3D_classifier/',
+    'TEMP_DIRECTORY': '/media/ramdisk1/',
+    
+    # PREPROCESSING    
+    'RADIUS_THRESHOLD_MM': 10, # heuristic: considers any nodule with radius bigger than RADIUS_THRESHOLD_MM as affected nodule 
+    'CHUNK_SIZE': 24,
+    
+    # MODEL_TRAINING
+    'NUM_FOLDS': None,# (2,2), #(5,5),  # (2,5) means execute only 2 folds of 5
+    'NUM_CLASSES': 2,
+    'BATCH_SIZE':3,
+    'EPOCHS':2,
+    'EARLY_STOPPING_ROUNDS':5,
+    
+    #OUTPUT_FILTER
+    'CLASS_1_THRESHOLD':0.90,
+}
+
+nodule_3D_classifier['DASHBOARD_ID']="CNN-{}_epochs_{}_early_stopping_{}".format(
+    nodule_3D_classifier['EPOCHS'],
+    nodule_3D_classifier['EARLY_STOPPING_ROUNDS'],
+    str(datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S"))
+)
+
+nodule_3D_classifier['EXECUTION_OUTPUT_DIRECTORY']=nodule_3D_classifier['OUTPUT_DIRECTORY']+nodule_3D_classifier['DASHBOARD_ID']+"/"
+if not 'TEMP_DIRECTORY' in nodule_3D_classifier:
+    nodule_3D_classifier['TEMP_DIRECTORY']=nodule_3D_classifier['EXECUTION_OUTPUT_DIRECTORY']
+
+nodule_3D_classifier['USE_K_FOLD']=nodule_3D_classifier['NUM_FOLDS'] is not None and nodule_3D_classifier['NUM_FOLDS']!=(1,1) and nodule_3D_classifier['NUM_FOLDS']!=(0,0)
+
 
 
 ####################### Extras and Cloud

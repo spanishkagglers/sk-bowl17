@@ -17,9 +17,7 @@ from sklearn.cluster import DBSCAN
 
 import sys
 sys.path.append("../")
-# Import our competition variables, has to be before matplotlib
-from competition_config import *
-d=nodules_3d_segmentation
+
 
 #import cv2
 import matplotlib.pyplot as plt
