@@ -227,7 +227,7 @@ augment_luna = {
 
 augment_dsbowl = {
     'INPUT_DIRECTORY' : chunks_DSB_extraction['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' :  COMPETITION_HOME + 'output/8B-2_augmented-chunks_for_CNN/',
+    'OUTPUT_DIRECTORY' :  COMPETITION_HOME + 'output/9_augmented-chunks_for_CNN/',
 }
 
 ####################### 10 - Features Extraction Nodules 3D
