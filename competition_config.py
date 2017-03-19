@@ -216,8 +216,6 @@ chunks_DSB_extraction={
     'DIAM_TH': DIAM_TH
 }
 
-DSB_ANN_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
-
 ####################### 9 - 3D nodules Augmentation 
 #
 
@@ -269,7 +267,7 @@ nodule_3D_classifier={
 #    'INPUT_LUNA_AFFECTED_NODULES' : '../luna-chunks/ANN64may2cm/',
 #    'INPUT_LUNA_HEALTHY_NODULES' : '../luna-chunks/ANN64men2cm/',
     'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
-    'LUNA_INPUT_DIRECTORY' : '../luna/ANN24/',
+    'LUNA_INPUT_DIRECTORY' : augment_luna['OUTPUT_DIRECTORY'],
     'BOWL_INPUT_DIRECTORY' : COMPETITION_HOME + 'output/8B/',
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Nodule_3D_classifier/',
     'TEMP_DIRECTORY': '/media/ramdisk1/',
