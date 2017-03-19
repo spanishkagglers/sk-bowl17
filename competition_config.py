@@ -216,6 +216,8 @@ chunks_DSB_extraction={
     'DIAM_TH': DIAM_TH
 }
 
+DSB_ANN_CSV_FILE = nodules_info_csv_from_step_7['OUTPUT_FILE']
+
 ####################### 9 - 3D nodules Augmentation 
 #
 
