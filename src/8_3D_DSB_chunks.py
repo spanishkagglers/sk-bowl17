@@ -67,7 +67,7 @@ def save_DSB_chunks(cand_same_size=True, PLOT_CAND=False, unknown_diam=True):
             numpyImage = load_DSB_resized_image(input_resized_dir + img_file)
             cands_sel = cands[cands["ct_scan_id"] == DSBid]
             for index, cand in cands_sel.iterrows():
-                if unknown_diam:
+                if unknown_diam==False:
                     diam = cand['mass_radius']*2.0
                     if diam > diam_th:
                         continue
