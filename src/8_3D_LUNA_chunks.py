@@ -20,7 +20,7 @@ def load_LUNA_resized_image(IMG_PATH):
     return resized_scan
 
 # Saves all ann(_ex) chunks from LUNA images in IMG_FOLDER
-def save_LUNA_chunks(subfolder):
+def save_LUNA_chunks(subfolder, PLOT_ANN=False):
 
     ORIGIN_OF_IMAGES_FILE = D8['ORIGIN_OF_IMAGES_FILE']
     if not os.path.isfile(ORIGIN_OF_IMAGES_FILE):
@@ -47,7 +47,6 @@ def save_LUNA_chunks(subfolder):
 
     chunk_dims = D8['CHUNK_DIMS']
     chunk_side = chunk_dims[0]
-    PLOT_ANN = False
 
     t1 = time.time()
     n_ann = 0
@@ -99,7 +98,7 @@ if __name__ == "__main__":
 
     for subfolder in D8['SUBFOLDERS']:
         print("processing subfolder", subfolder)
-        save_LUNA_chunks(subfolder)
+        save_LUNA_chunks(subfolder, PLOT_ANN=False)
 
     print("Total elapsed time: " + \
           str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
