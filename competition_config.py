@@ -172,17 +172,19 @@ nodules_info_csv_from_step_7={
 
 ####################### 8 - 3D chunks extraction
 #
-CHUNK_SIDE = 24
+CHUNK_SIDE = 64
 NEW_ANN_DIAMETER = 15.0
-DIST_TH2 = 5**2 # hay ann y ann_ex de LUNA que son el mismo nodulo en distintos algoritmos; dist**2 < DIST_TH2
+DIST_TH2 = 3**2 # hay ann y ann_ex de LUNA que son el mismo nodulo en distintos algoritmos; dist**2 < DIST_TH2
 
 #LUNA_PREFIX = "ANN" # LUNA Annotations
-LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
+#LUNA_PREFIX = "ANN_EX" # LUNA Annotations excluded
+LUNA_PREFIX = "CAND" # LUNA candidates from non-nodule/healthy areas
 
 if LUNA_PREFIX == "ANN":
     LUNA_ANN_CSV_FILE = "annotations.csv"
 else:
-    LUNA_ANN_CSV_FILE = "annotations_excluded.csv"
+    #LUNA_ANN_CSV_FILE = "annotations_excluded.csv"
+    LUNA_ANN_CSV_FILE = "candidates_processed.csv"
 LUNA_ANN_CSV_FILE_PATH = LUNA_CSV_DIRECTORY + LUNA_ANN_CSV_FILE
 LUNA_ANN = LUNA_ROOT + LUNA_PREFIX + str(CHUNK_SIDE) + "/"
 
