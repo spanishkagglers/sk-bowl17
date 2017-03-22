@@ -35,8 +35,8 @@ def save_LUNA_chunks(subfolder, PLOT_ANN=False):
         exit(0)
 
     prefix = D8['PREFIX']
-    if prefix not in ["ANN", "ANN_EX"]:
-        print("LUNA Prefix must be ANN or ANN_EX, but is", prefix)
+    if prefix not in ["ANN", "ANN_EX", "CAND"]:
+        print("LUNA Prefix must be ANN, ANN_EX, or CAND but is", prefix)
         exit(0)
 
     ANNOTS_FILE = D8["ANN_CSV_FILE"]
