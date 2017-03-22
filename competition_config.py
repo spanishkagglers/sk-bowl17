@@ -172,7 +172,7 @@ nodules_info_csv_from_step_7={
 
 ####################### 8 - 3D chunks extraction
 #
-CHUNK_SIDE = 64
+CHUNK_SIDE = 24
 NEW_ANN_DIAMETER = 15.0
 DIST_TH2 = 3**2 # hay ann y ann_ex de LUNA que son el mismo nodulo en distintos algoritmos; dist**2 < DIST_TH2
 
