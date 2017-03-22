@@ -17,7 +17,11 @@ def load_DSB_resized_image(IMG_PATH):
         resized_scan = pickle.load(handle)
     return resized_scan
 
-def save_DSB_chunks(cand_same_size=True, PLOT_CAND=False):
+def save_DSB_chunks(cand_same_size=True, PLOT_CAND=False, unknown_diam=True):
+
+    if unknown_diam and cand_same_size:
+        print("Warning: no resize posible with unknown diameter; setting cand_same_size to False")
+        cand_same_size = False
 
     CANDIDATES_FILE = D8b["INPUT_METADATA"]
     if not os.path.exists(CANDIDATES_FILE):
@@ -63,9 +67,10 @@ def save_DSB_chunks(cand_same_size=True, PLOT_CAND=False):
             numpyImage = load_DSB_resized_image(input_resized_dir + img_file)
             cands_sel = cands[cands["ct_scan_id"] == DSBid]
             for index, cand in cands_sel.iterrows():
-                diam = cand['mass_radius']*2.0
-                if diam > diam_th:
-                    continue
+                if unknown_diam:
+                    diam = cand['mass_radius']*2.0
+                    if diam > diam_th:
+                        continue
 
                 PREV_REPET = False
                 cand_id = cand['id_nodule']
@@ -150,7 +155,7 @@ if __name__ == "__main__":
 
     START_TIME = time.time()
 
-    save_DSB_chunks(cand_same_size=True, PLOT_CAND=False)
+    save_DSB_chunks(cand_same_size=True, PLOT_CAND=False, unknown_diam=True)
 
     print("Total elapsed time: " + \
           str(time.strftime('%H:%M:%S', time.gmtime((time.time() - START_TIME)))))
