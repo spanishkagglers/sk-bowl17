@@ -27,6 +27,7 @@ PICKLE_PROTOCOL = pickle.HIGHEST_PROTOCOL # protocol 4
 
 import datetime
 
+
 ####################### 0 - RESIZE DICOMS
 #
 # Part of Full Preprocessing Tutorial to resample DICOMs to a certain isotropic
@@ -271,11 +272,14 @@ global nodule_3D_classifier
 nodule_3D_classifier={
 #    'INPUT_LUNA_AFFECTED_NODULES' : '../luna-chunks/ANN64may2cm/',
 #    'INPUT_LUNA_HEALTHY_NODULES' : '../luna-chunks/ANN64men2cm/',
+
+    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', #'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',
     'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
     'LUNA_INPUT_DIRECTORY' : augment_luna['OUTPUT_DIRECTORY'],
-    'BOWL_INPUT_DIRECTORY' : COMPETITION_HOME + 'output/8B/',
+    'BOWL_INPUT_DIRECTORY' : chunks_DSB_extraction['OUTPUT_DIRECTORY'],
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Nodule_3D_classifier/',
     'TEMP_DIRECTORY': '/media/ramdisk1/',
+    'USE_RAMDISK': False,
     
     # PREPROCESSING    
     'RADIUS_THRESHOLD_MM': 10, # heuristic: considers any nodule with radius bigger than RADIUS_THRESHOLD_MM as affected nodule 
@@ -283,10 +287,15 @@ nodule_3D_classifier={
     
     # MODEL_TRAINING
     'NUM_FOLDS': None,# (2,2), #(5,5),  # (2,5) means execute only 2 folds of 5
-    'NUM_CLASSES': 2,
-    'BATCH_SIZE':3,
+    #'NUM_CLASSES': autodetected, see bellow
+    'BATCH_SIZE':100,
     'EPOCHS':2,
     'EARLY_STOPPING_ROUNDS':5,
+    
+    'CLASS_OTHER_TISSUES':0,
+    'CLASS_NON_NODULES':0,
+    'CLASS_LOWER_DIAMETER_NODULES':0,
+    'CLASS_HIGHER_DIAMETER_NODULES':1,
     
     #OUTPUT_FILTER
     'CLASS_1_THRESHOLD':0.90,
@@ -303,6 +312,37 @@ if not 'TEMP_DIRECTORY' in nodule_3D_classifier:
     nodule_3D_classifier['TEMP_DIRECTORY']=nodule_3D_classifier['EXECUTION_OUTPUT_DIRECTORY']
 
 nodule_3D_classifier['USE_K_FOLD']=nodule_3D_classifier['NUM_FOLDS'] is not None and nodule_3D_classifier['NUM_FOLDS']!=(1,1) and nodule_3D_classifier['NUM_FOLDS']!=(0,0)
+
+nodule_3D_classifier['CLASSES']=sorted(set([
+    nodule_3D_classifier['CLASS_OTHER_TISSUES'],
+    nodule_3D_classifier['CLASS_NON_NODULES'],
+    nodule_3D_classifier['CLASS_LOWER_DIAMETER_NODULES'],
+    nodule_3D_classifier['CLASS_HIGHER_DIAMETER_NODULES']
+]))
+
+
+if 'NUM_CLASSES' not in nodule_3D_classifier:
+    nodule_3D_classifier['NUM_CLASSES']=len(nodule_3D_classifier['CLASSES'])
+
+####################### 15 - Nodule 3D classifier
+#
+# 
+# 
+
+global nodule_based_lung_classifier
+
+nodule_based_lung_classifier={
+#    'CNN':'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',    
+#    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', 
+    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
+    'INPUT_DIRECTORY' : nodule_3D_classifier['OUTPUT_DIRECTORY'],
+    'BOWL_LABELS' : '../stage1_labels.csv',
+    'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/15_nodule_based_lung_classifier/',
+    'PREDICTION_BASE':0.2878788
+    
+    
+}
 
 
 
