@@ -183,9 +183,11 @@ LUNA_PREFIX = "CAND" # LUNA candidates from non-nodule/healthy areas
 
 if LUNA_PREFIX == "ANN":
     LUNA_ANN_CSV_FILE = "annotations.csv"
+elif LUNA_PREFIX == "ANN_EX":
+    LUNA_ANN_CSV_FILE = "annotations_excluded.csv" # deberia ser UNIQUE!!!
 else:
-    #LUNA_ANN_CSV_FILE = "annotations_excluded.csv"
     LUNA_ANN_CSV_FILE = "candidates_processed.csv"
+
 LUNA_ANN_CSV_FILE_PATH = LUNA_CSV_DIRECTORY + LUNA_ANN_CSV_FILE
 LUNA_ANN = LUNA_ROOT + LUNA_PREFIX + str(CHUNK_SIDE) + "/"
 
