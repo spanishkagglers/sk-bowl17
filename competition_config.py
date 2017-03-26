@@ -249,6 +249,7 @@ features_extraction_nodules_3d={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_features_extraction_3D_nodules/',
 }
 
+
 ####################### 13 - Features Extraction Lungs
 #
 # 
@@ -273,10 +274,12 @@ nodule_3D_classifier={
 #    'INPUT_LUNA_AFFECTED_NODULES' : '../luna-chunks/ANN64may2cm/',
 #    'INPUT_LUNA_HEALTHY_NODULES' : '../luna-chunks/ANN64men2cm/',
 
-    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', #'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',
+    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
     'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
     'LUNA_INPUT_DIRECTORY' : augment_luna['OUTPUT_DIRECTORY'],
     'BOWL_INPUT_DIRECTORY' : chunks_DSB_extraction['OUTPUT_DIRECTORY'],
+    'BOWL_LABELS' : '../stage1_labels.csv',
+    #'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Nodule_3D_classifier/',
     'TEMP_DIRECTORY': '/media/ramdisk1/',
     'USE_RAMDISK': False,
@@ -292,16 +295,32 @@ nodule_3D_classifier={
     'EPOCHS':2,
     'EARLY_STOPPING_ROUNDS':5,
     
-    'CLASS_OTHER_TISSUES':0,
-    'CLASS_NON_NODULES':0,
-    'CLASS_LOWER_DIAMETER_NODULES':0,
-    'CLASS_HIGHER_DIAMETER_NODULES':1,
+    
+    'CLASS_LOWER_DIAMETER_NODULES':0, # [ANN24.ZIP] LUNA chunks with original diameter <2cm (candidates.csv)
+    'CLASS_HIGHER_DIAMETER_NODULES':1,  # [ANN24.ZIP] LUNA chunks with original diameter >2cm (candidates.csv)
+    'CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS':2, # [] BOWL chunks from non-cancer lungs (7 - Nodules 3D segmentation)
+    'CLASS_NON_NODULES':3,  # [ANN_EX24.ZIP] from LUNA annotations_excluded.csv
+    'CLASS_OTHER_TISSUES':4,  # [CAND24.ZIP] ?????
+    
     
     #OUTPUT_FILTER
     'CLASS_1_THRESHOLD':0.90,
 }
 
-nodule_3D_classifier['DASHBOARD_ID']="CNN-{}_epochs_{}_early_stopping_{}".format(
+nodule_3D_classifier['CLASSES']=sorted(set([
+#    nodule_3D_classifier['CLASS_OTHER_TISSUES'], 
+#    nodule_3D_classifier['CLASS_NON_NODULES'],
+    nodule_3D_classifier['CLASS_LOWER_DIAMETER_NODULES'], 
+    nodule_3D_classifier['CLASS_HIGHER_DIAMETER_NODULES'],
+    nodule_3D_classifier['CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS'],
+]))
+
+
+if 'NUM_CLASSES' not in nodule_3D_classifier:
+    nodule_3D_classifier['NUM_CLASSES']=len(nodule_3D_classifier['CLASSES'])
+
+nodule_3D_classifier['DASHBOARD_ID']="CNN-{}_classes_{}_epochs_{}_early_stopping_{}".format(
+    nodule_3D_classifier['NUM_CLASSES'],
     nodule_3D_classifier['EPOCHS'],
     nodule_3D_classifier['EARLY_STOPPING_ROUNDS'],
     str(datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S"))
@@ -313,16 +332,7 @@ if not 'TEMP_DIRECTORY' in nodule_3D_classifier:
 
 nodule_3D_classifier['USE_K_FOLD']=nodule_3D_classifier['NUM_FOLDS'] is not None and nodule_3D_classifier['NUM_FOLDS']!=(1,1) and nodule_3D_classifier['NUM_FOLDS']!=(0,0)
 
-nodule_3D_classifier['CLASSES']=sorted(set([
-    nodule_3D_classifier['CLASS_OTHER_TISSUES'],
-    nodule_3D_classifier['CLASS_NON_NODULES'],
-    nodule_3D_classifier['CLASS_LOWER_DIAMETER_NODULES'],
-    nodule_3D_classifier['CLASS_HIGHER_DIAMETER_NODULES']
-]))
 
-
-if 'NUM_CLASSES' not in nodule_3D_classifier:
-    nodule_3D_classifier['NUM_CLASSES']=len(nodule_3D_classifier['CLASSES'])
 
 ####################### 15 - Nodule 3D classifier
 #
@@ -332,17 +342,22 @@ if 'NUM_CLASSES' not in nodule_3D_classifier:
 global nodule_based_lung_classifier
 
 nodule_based_lung_classifier={
-#    'CNN':'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',    
-#    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', 
-    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
+    'CNN':'CNN-3_classes_15_epochs_5_early_stopping_2017-03-25_19.31.23',
     'INPUT_DIRECTORY' : nodule_3D_classifier['OUTPUT_DIRECTORY'],
     'BOWL_LABELS' : '../stage1_labels.csv',
     'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/15_nodule_based_lung_classifier/',
-    'PREDICTION_BASE':0.2878788
+    'SCORE_BASE':0.2878788,
+    'SCORE_AFFECTED':0.3878788,
+    'SCORE_HEALTHY':0.1878788,
+    'AFFECTED_THRESHOLD': 0.935,
+    'HEALTHY_THRESHOLD': 0.07,
+    
     
     
 }
+
+nodule_based_lung_classifier['EXECUTION_OUTPUT_DIRECTORY']=nodule_based_lung_classifier['OUTPUT_DIRECTORY']+nodule_based_lung_classifier['CNN']+"/"
 
 
 

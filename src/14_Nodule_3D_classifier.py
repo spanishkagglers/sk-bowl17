@@ -272,13 +272,25 @@ X_tr=[]
 Y_tr=[]
 luna_affected_augmentations={}
 luna_healthy_augmentations={}
-luna_num_affected_chucks=get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_affected_nodules, nodules_dict=luna_affected_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=1)
-luna_num_healthy_chucks =get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_healthy_nodules, nodules_dict=luna_healthy_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=0, augmentations=False)
+luna_num_affected_chucks=get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_affected_nodules, nodules_dict=luna_affected_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_HIGHER_DIAMETER_NODULES'])
+luna_num_healthy_chucks =get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_healthy_nodules, nodules_dict=luna_healthy_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_LOWER_DIAMETER_NODULES'], augmentations=False)
+
+
+bowl_labels__pd=pd.read_csv(d['BOWL_LABELS'])
+bowl_non_affected_lungs=bowl_labels__pd['id'].loc[bowl_labels__pd['cancer']==0].values
+#all_patients=next(os.walk(d['BOWL_PATIENTS']))[1]
+bowl_num_healthy_chunks =get_nodules_and_augmentations_dict(d['BOWL_INPUT_DIRECTORY'], bowl_non_affected_lungs, augmentation_sep='',  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS'], augmentations=False)
+
+
+
+
+
 
 num_affected_without_augmentation = len(luna_affected_nodules)
 num_healthy_without_augmentation = len(luna_healthy_nodules)
-print("\nluna_num_affected_chucks with augmentation: " + str(luna_num_affected_chucks))
-print("luna_num_healthy_chucks: with augmentation: " + str(luna_num_healthy_chucks))
+print("\nCLASS_HIGHER_DIAMETER_NODULES nodules (includes augmentation): " + str(luna_num_affected_chucks))
+print("CLASS_LOWER_DIAMETER_NODULES nodules: " + str(luna_num_healthy_chucks))
+print("CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS: ", bowl_num_healthy_chunks)
 
 num_affected = len(luna_affected_nodules)
 num_healthy = len(luna_healthy_nodules)
@@ -288,13 +300,8 @@ print("num_healthy: " + str(num_healthy))
 
 
 
-#X_tr=luna_affected_nodules + luna_healthy_nodules
 
-
-label=np.hstack((
-    np.ones((luna_num_affected_chucks,),dtype = int),
-    np.zeros((luna_num_healthy_chucks,),dtype = int)
-))
+label=np.array(Y_tr)
 
 X_tr_array = np.array(X_tr) 
 
@@ -343,11 +350,11 @@ def get_normalized_dataset_for_cnn(dataset, substract=None, divide_by=None, img_
     
     print(dataset.shape, ' samples') 
     
-#    dataset_mean = np.mean(result_dataset)
-#    dataset_max = np.max(np.abs(result_dataset))
+    dataset_mean = np.mean(result_dataset)
+    dataset_max = np.max(np.abs(result_dataset))
     
-    dataset_mean = np.min(result_dataset)
-    dataset_max = np.max(np.abs(result_dataset))-dataset_mean
+#     = np.min(result_dataset)
+#     = np.max(np.abs(result_dataset))-dataset_min
     
     if substract is None:
         substract=dataset_mean
@@ -550,7 +557,7 @@ for train_index, val_index in validation_indexes:
     
 
     # Train the model
-    
+    print("Training...")
     hist = model.fit(X_train_fold,
             y_train_fold,
             validation_data=validation_data,
@@ -559,6 +566,7 @@ for train_index, val_index in validation_indexes:
             shuffle=True
             ,callbacks= callbacks_list
     ) #show_accuracy=True,
+    print("Done")
     
 
     
@@ -615,7 +623,7 @@ for train_index, val_index in validation_indexes:
     print("Test set predictions: in progress")
     test_preds=model.predict(test_set, batch_size=batch_size)
     test_preds__pd=pd.concat([ids_test__pd,
-                            pd.DataFrame(test_preds[:,1].astype(np.float), columns={'prediction'})], 
+                            pd.DataFrame(test_preds.astype(np.float))], 
                             axis=1) 
     
     test_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"test_predictions_"+ model_output_filename[:-len(".hdf5")] 
@@ -727,6 +735,8 @@ report['val_scores']=list(report['val_scores'])
 report['dashboard']=d
 report['history']=hist.history
 
+report['ellapsed_time']=round(time.time() - start_time) #seconds
+
 try:
     with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) + ".json" , 'w') as f:
         json.dump(report, f, indent=4, sort_keys=True)
@@ -737,7 +747,7 @@ with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) +
 with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) + ".yaml" , 'w')  as outfile:
     yaml.dump(report, outfile, default_flow_style=False)        
         
-print("Ellapsed time: {} seconds".format((time.time() - start_time)))
+print("Ellapsed time: {} seconds".format(report['ellapsed_time'])
 
 
 
