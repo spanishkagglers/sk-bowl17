@@ -305,7 +305,7 @@ nodule_3D_classifier={
 ''',   
     'RADIUS_THRESHOLD_MM': 10, # heuristic: considers any nodule with radius bigger than RADIUS_THRESHOLD_MM as affected nodule 
     'CHUNK_SIZE': 24,
-    'MAX_CHUNKS_PER_CLASS': 50,
+    'MAX_CHUNKS_PER_CLASS': 1200,
     'MAX_CHUNKS_TO_PREDICT': None, #50, # for testing only  ¡¡¡ MUST BE None !!!
     
     
