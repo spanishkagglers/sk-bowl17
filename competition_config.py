@@ -131,18 +131,32 @@ nodules_roi_dashboard={
     'BALL_RADIUS':  2,
 }
 
-####################### 6 - Nodules 3D segmentation (LUNA-version)
+####################### 6 - LIDC ETL
 #
-# Candidate Generation and LUNA16 preprocessing (part 2)
-# https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
+# https://wiki.cancerimagingarchive.net/display/Public/LIDC-IDRI
+# http://www.via.cornell.edu/lidc/
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2176079/
 
-global nodules_3d_segmentation_luna
+global lidc_etl
 
-nodules_3d_segmentation_luna={
-    #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
-    'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_nodules_3D_segmentation_LUNA"016/',
+lidc_etl={
+    'DICOM_INPUT_DIRECTORY' : '../lidc/DOI',
+    'XML_INPUT_DIRECTORY' : '../lidc/LIDC-XML-only',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_lidc_etl/',
 }
+
+####################### 6B - reduce CSV
+#
+# reduce: joins all centerradius info from step 7 pickles, into a sligle CSV
+
+
+global nodules_info_csv_from_step_6
+
+nodules_info_csv_from_step_6={
+    'INPUT_DIRECTORY' : lidc_etl['OUTPUT_DIRECTORY'],
+    'OUTPUT_FILE' : COMPETITION_HOME + 'output/step-6-nodules.{}',
+}
+
 
 ####################### 7 - Nodules 3D segmentation
 #
