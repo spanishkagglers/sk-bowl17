@@ -103,14 +103,23 @@ for xml_filename in tqdm(xml_file_list):
     with open(xml_filename,'r') as f:
         xml_tree = ElementTree.fromstring( re.sub(' xmlns="[^"]+"', '', f.read()) )  
     
+    if(xml_tree.find('ResponseHeader') is None or xml_tree.find('ResponseHeader').find('StudyInstanceUID') is None or xml_tree.find('ResponseHeader').find('SeriesInstanceUid') is None):
+        print("ERROR: StudyInstanceUID and SeriesInstanceUid required.  Skipped: " + xml_filename)
+        continue
     study_instance_uid  = xml_tree.find('ResponseHeader').find('StudyInstanceUID').text
     series_instance_uid = xml_tree.find('ResponseHeader').find('SeriesInstanceUid').text
+    
+    
+    info_output_filename, points_output_filename = get_output_filenames(series_instance_uid)
+    if os.path.isfile(info_output_filename):
+        print("Skipped "+ xml_filename)
+        continue
     
     ct_scan_folder=find_ct_scan_folder(series_instance_uid)
     
     if ct_scan_folder is None:
         print("ERROR: DICOM folder not found for :" + series_instance_uid)
-        break
+        continue
     
     
    
@@ -179,7 +188,7 @@ for xml_filename in tqdm(xml_file_list):
                     'z':cluster_z
                 } '''   
                 
-                info_output_filename, points_output_filename = get_output_filenames(series_instance_uid)
+                
                 with open(info_output_filename, 'wb') as handle:
                     pickle.dump(nodules, handle, protocol=PICKLE_PROTOCOL)
                     if AWS: upload_to_s3(info_output_filename)
