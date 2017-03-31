@@ -7,6 +7,8 @@ source('../competition_config.R')
 setwd(path_working_directory)
 
 
+trainName = 'train_lung_nods.csv'
+testName = 'test_lung_nods.csv'
 
 # load data
 import.cols = 'all' # 'all', 'selected'
@@ -40,8 +42,8 @@ log <- c(log,'')
 # import
 
 if(import.cols=='all'){
-  TRAIN <- fread(path_train, showProgress = TRUE, header=T)
-  test <- fread(path_test,  showProgress = TRUE, header=T)
+  TRAIN <- fread(paste0(path_ml_input,trainName), showProgress = TRUE, header=T)
+  test <- fread(paste0(path_ml_input,testName),  showProgress = TRUE, header=T)
   log <- c(log,'Import: all features')
 }else if(import.cols=='selected'){
   colsToImport = c(
@@ -84,8 +86,8 @@ if(import.cols=='all'){
     'allNods_ratioMaxMin_nod_xmax_xmaxRoi_ratio',
     'allNods_ratioMaxMin_nod_cuboid_volume',
     'cancer')
-  TRAIN <- fread(path_train, showProgress = TRUE, header=T, select=colsToImport)
-  test <- fread(path_test,  showProgress = TRUE, header=T, select=colsToImport)
+  TRAIN <- fread(paste0(path_ml_input,trainName), showProgress = TRUE, header=T, select=colsToImport)
+  test <- fread(paste0(path_ml_input,testName),  showProgress = TRUE, header=T, select=colsToImport)
   log <- c(log,'Import: selected features',paste0(colsToImport,collapse=", "))
 }
 log <- c(log,'')
@@ -298,7 +300,8 @@ for(comb in 1:nrow(combs)){
     fwrite(x=list(log), file=paste0(path_ml_output,'log_',fileNameComun), row.names=F, quote=FALSE)
     fwrite(x=fiFoldN,  file=paste0(path_ml_output,'fiFolds_',fileNameComun), row.names=F, quote=FALSE)
     fwrite(x=yTestPredsCV[,.(id,cancer=meanTarget)], file=paste0(path_ml_output,'yTestPreds_',fileNameComun), row.names=F, quote=FALSE)
-  
+    fwrite(x=yValPredsCV,file=paste0(path_ml_output,'yTrainPredsOOF_',fileNameComun), row.names=F, quote=FALSE)
+    
     print(paste0("Combinacion ",comb," finalizada a las ",Sys.time()))
     
   }else{

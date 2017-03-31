@@ -69,14 +69,27 @@ compute<-function(ln,prefix){
   return(dt)
 }
 
-fileName = 'intermediate_output_CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58_fold_1.csv'
-cnn <- fread(paste0(path_intermediate_cnn,fileName), showProgress = TRUE, header=T)
+# Incluyo CNN intermediate
+fileName <- list.files(path_intermediate_cnn,pattern='intermediate_output_',full.names=T)
+cnn <- fread(fileName, showProgress = TRUE, header=T)
 cnnNames <- names(cnn)[!names(cnn)%in%c('nodule_id')]
 setnames(cnn,cnnNames,paste0('cnn_',cnnNames))
 
+# Incluyo predicciones a nivel nodulos yTrainOOFpreds y yTestPreds
+yTrainOOFfileName = 'yTrainPredsOOF_xgb4_all_cv5_svm0.5661783_stm0.5232184_esr100_ss0.7_md5_csbt0.9_eta0.05_mcw20_d2017.03.28_h16.40.58.csv'
+yTestfileName = 'yTestPreds_xgb4_all_cv5_svm0.5661783_stm0.5232184_esr100_ss0.7_md5_csbt0.9_eta0.05_mcw20_d2017.03.28_h16.40.58.csv'
+yTrainOOF <- fread(paste0(path_xgb_nodule_preds,yTrainOOFfileName), showProgress = TRUE, header=T)
+yTest <- fread(paste0(path_xgb_nodule_preds,yTestfileName), showProgress = TRUE, header=T)
+yNodPreds <- rbindlist(list(yTrainOOF,yTest))
+yNodPredsNames <- names(yNodPreds)[!names(yNodPreds)%in%c('id')]
+setnames(yNodPreds,yNodPredsNames,'xgbNodPred')
+
 allData = data.table()
 
+contador = 1
 for(nodfile in nodfiles){
+  
+  print(paste0(contador, " : ", nodfile))
   
   #nodfile = nodfiles[1]
   
@@ -84,39 +97,45 @@ for(nodfile in nodfiles){
   
   #ln <- ln[nod_sphere_radius>12 & nod_sphere_radius<120,]
   
-  setnames(ln,'id','nodule_id')
-  setkey(ln,nodule_id)
-  setkey(cnn,nodule_id)
-  ln <- ln[cnn,nomatch=0]
-  ln[,nodule_id:=NULL]
+  ######################################## voy por aquí ##############################################
+  setkey(ln,id)
+  setkey(yNodPreds,id)
+  ln <- ln[yNodPreds,nomatch=0]
+  ######################################## voy por aquí ##############################################
   
-  ln[,nod_geo_to_massCenter_distance:=sqrt((raw_nod_center_x-raw_nod_masscenter_x)^2 + (raw_nod_center_y-raw_nod_masscenter_y)^2 + (raw_nod_center_z-raw_nod_masscenter_z)^2)]
-  
-  selected_cols = names(ln)[!grepl('raw_cuboid_',names(ln)) & !grepl('raw_roi_',names(ln))]
-  ln <- ln[,.SD,.SDcols=selected_cols]
+  if(dim(ln)[1]){
+    setnames(ln,'id','nodule_id')
+    setkey(ln,nodule_id)
+    setkey(cnn,nodule_id)
+    ln <- ln[cnn,nomatch=0]
+    ln[,nodule_id:=NULL]
     
-  id_scan <- unique(ln$ct_scan_id)
-  
-  label <- ifelse(labels[ct_scan_id==id_scan,.N]==0,NA,labels[ct_scan_id==id_scan,cancer])
-
-  # squared features
-  selected_cols = names(ln)[!names(ln)%in%c('ct_scan_id')]
-  for(feat in selected_cols){
-    featName = paste0('squared_',feat)
-    ln[,(featName):=(get(feat))^2]
+    ln[,nod_geo_to_massCenter_distance:=sqrt((raw_nod_center_x-raw_nod_masscenter_x)^2 + (raw_nod_center_y-raw_nod_masscenter_y)^2 + (raw_nod_center_z-raw_nod_masscenter_z)^2)]
+    
+    selected_cols = names(ln)[!grepl('raw_cuboid_',names(ln)) & !grepl('raw_roi_',names(ln))]
+    ln <- ln[,.SD,.SDcols=selected_cols]
+    
+    id_scan <- unique(ln$ct_scan_id)
+    
+    label <- ifelse(labels[ct_scan_id==id_scan,.N]==0,NA,labels[ct_scan_id==id_scan,cancer])
+    
+    # squared features
+    selected_cols = names(ln)[!names(ln)%in%c('ct_scan_id')]
+    for(feat in selected_cols){
+      featName = paste0('squared_',feat)
+      ln[,(featName):=(get(feat))^2]
+    }
+    
+    allData <- rbindlist(list(
+      allData,
+      data.table(
+        id=id_scan,
+        compute(ln,'allNods_'),
+        cancer=label
+      )
+    ),fill=TRUE,use.names=TRUE)
   }
-  
-  allData <- rbindlist(list(
-    allData,
-    data.table(
-      id=id_scan,
-      compute(ln,'allNods_'),
-      cancer=label
-    )
-  ),fill=TRUE,use.names=TRUE)
-
-
-  
+  contador = contador + 1
 }
 
 # Elimino features constantes

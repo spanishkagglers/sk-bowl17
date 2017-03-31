@@ -70,16 +70,18 @@ compute<-function(ln,prefix){
 }
 
 
-fileName = 'intermediate_output_CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58_fold_1.csv'
-cnn <- fread(paste0(path_intermediate_cnn,fileName), showProgress = TRUE, header=T)
+fileName <- list.files(path_intermediate_cnn,pattern='intermediate_output_',full.names=T)
+cnn <- fread(fileName, showProgress = TRUE, header=T)
 cnnNames <- names(cnn)[!names(cnn)%in%c('nodule_id')]
 setnames(cnn,cnnNames,paste0('cnn_',cnnNames))
 
 allData = data.table()
-
+contador = 1
 for(nodfile in nodfiles){
   
   #nodfile = nodfiles[1]
+  
+  print(paste0(contador, " : ", nodfile))
   
   ln <- fread(nodfile)
   
@@ -113,7 +115,6 @@ for(nodfile in nodfiles){
   allData <- rbindlist(list(
     allData,
     data.table(
-      id=id_scan,
       ln[,.SD,.SDcols=names(ln)[!names(ln)%in%c('ct_scan_id')]],
       #compute(ln,'allNods_'),
       cancer=label
@@ -121,13 +122,14 @@ for(nodfile in nodfiles){
   ),fill=TRUE,use.names=TRUE)
 
 
-  
+  contador = contador + 1
 }
 
 setkey(allData,nodule_id)
 setkey(cnn,nodule_id)
 allData <- allData[cnn]
-allData[,nodule_id:=NULL]
+
+setnames(allData,'nodule_id','id')
 
 # Elimino features constantes
 cols <- names(allData)[!names(allData) %in% c('id','cancer')]
