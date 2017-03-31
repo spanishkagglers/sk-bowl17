@@ -138,7 +138,7 @@ if not os.path.exists(d['EXECUTION_OUTPUT_DIRECTORY']):
 def copy_to_ramdisk(dashboard_directory_key, ramdisk_directory):
     ramdisk_directory=d['TEMP_DIRECTORY']+ramdisk_directory
     if not os.path.exists(ramdisk_directory):
-        print("Copying chunks into ramdisk: ", ramdisk_directory)
+        print("Copying chunks into ramdisk: ", d[dashboard_directory_key], " --> ", ramdisk_directory)
         shutil.copytree(d[dashboard_directory_key], ramdisk_directory)
     d[dashboard_directory_key]=ramdisk_directory    
 
@@ -146,8 +146,10 @@ if d['USE_RAMDISK']:
     print("INFO: Using ramdisk")
     copy_to_ramdisk('BOWL_INPUT_DIRECTORY', '8B-bowl_chunks/')
     copy_to_ramdisk('LUNA_INPUT_DIRECTORY', '9A-augmented_luna_chunks/')
+#    copy_to_ramdisk('LUNA_NON_NODULES_INPUT_DIRECTORY', 'LUNA_NON_NODULES/')
+#    copy_to_ramdisk('LUNA_OTHER_TISSUES_INPUT_DIRECTORY', 'LUNA_OTHER_TISSUES/')
 
-    
+
 
 
 img_rows=img_cols=img_depth=chunck_size=d['CHUNK_SIZE'] # ¿X, Y,?, Z
@@ -236,8 +238,21 @@ luna_healthy_nodules=[x for x in luna_chunks_list_without_augmentation if x not 
 
 
 
+'''
+      _       _          _                 _ _             
+     | |     | |        | |               | (_)            
+   __| | __ _| |_ __ _  | | ___   __ _  __| |_ _ __   __ _ 
+  / _` |/ _` | __/ _` | | |/ _ \ / _` |/ _` | | '_ \ / _` |
+ | (_| | (_| | || (_| | | | (_) | (_| | (_| | | | | | (_| |
+  \__,_|\__,_|\__\__,_| |_|\___/ \__,_|\__,_|_|_| |_|\__, |
+                                                      __/ |
+                                                     |___/ 
 
-def get_nodules_and_augmentations_dict(directory, nodules_file_list,nodules_dict=None, dataset_ids=None, dataset_X=None,dataset_Y=None,y_value=None, augmentation_sep=CHUNK_VARIATION_SEP, augmentations=True):
+'''
+
+print ("="*15 + "\n" + d['CLASSES_TXT'] + "="*15)
+
+def get_nodules_and_augmentations_dict(directory, nodules_file_list,nodules_dict=None, dataset_ids=None, dataset_X=None,dataset_Y=None,y_value=None, augmentation_sep=CHUNK_VARIATION_SEP, augmentations=True, max_chunks=None):
     num_chuncks=0
     
     for nodule_id in tqdm(nodules_file_list):
@@ -266,35 +281,60 @@ def get_nodules_and_augmentations_dict(directory, nodules_file_list,nodules_dict
                     dataset_ids.append(augmented_nodule_id)
             if not augmentations:
                 break
+            if max_chunks is not None and num_chuncks >= max_chunks:
+                break
+        if max_chunks is not None and num_chuncks >= max_chunks:
+            print("Reached MAX_CHUNKS_PER_CLASS of " , max_chunks , ".  Stopped.")
+            break
     return num_chuncks
 
 X_tr=[]
 Y_tr=[]
-luna_affected_augmentations={}
-luna_healthy_augmentations={}
-luna_num_affected_chucks=get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_affected_nodules, nodules_dict=luna_affected_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=1)
-luna_num_healthy_chucks =get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_healthy_nodules, nodules_dict=luna_healthy_augmentations, dataset_X=X_tr, dataset_Y=Y_tr, y_value=0, augmentations=False)
-
-num_affected_without_augmentation = len(luna_affected_nodules)
-num_healthy_without_augmentation = len(luna_healthy_nodules)
-print("\nluna_num_affected_chucks with augmentation: " + str(luna_num_affected_chucks))
-print("luna_num_healthy_chucks: with augmentation: " + str(luna_num_healthy_chucks))
-
-num_affected = len(luna_affected_nodules)
-num_healthy = len(luna_healthy_nodules)
-print("\nnum_affected: " + str(num_affected))
-print("num_healthy: " + str(num_healthy))
+#luna_affected_augmentations={}
+#luna_healthy_augmentations={}
 
 
+if 'CLASS_HIGHER_DIAMETER_NODULES' in d['USE_CLASSES']:
+    luna_num_affected_chucks=get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_affected_nodules,  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_HIGHER_DIAMETER_NODULES'], max_chunks=d['MAX_CHUNKS_PER_CLASS'] )
+    print("\nCLASS_HIGHER_DIAMETER_NODULES nodules (includes augmentation): " + str(luna_num_affected_chucks))
+
+if 'CLASS_LOWER_DIAMETER_NODULES' in d['USE_CLASSES']:
+    luna_num_healthy_chucks =get_nodules_and_augmentations_dict(d['LUNA_INPUT_DIRECTORY'], luna_healthy_nodules,  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_LOWER_DIAMETER_NODULES'], augmentations=False, max_chunks=d['MAX_CHUNKS_PER_CLASS'] )
+    print("CLASS_LOWER_DIAMETER_NODULES nodules: " + str(luna_num_healthy_chucks))
 
 
-#X_tr=luna_affected_nodules + luna_healthy_nodules
+bowl_labels__pd=pd.read_csv(d['BOWL_LABELS'])
+bowl_non_affected_lungs=bowl_labels__pd['id'].loc[bowl_labels__pd['cancer']==0].values
+#all_patients=next(os.walk(d['BOWL_PATIENTS']))[1]
+if 'CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS' in d['USE_CLASSES']:
+    bowl_num_healthy_chunks =get_nodules_and_augmentations_dict(d['BOWL_INPUT_DIRECTORY'], bowl_non_affected_lungs, augmentation_sep='',  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS'], augmentations=False, max_chunks=d['MAX_CHUNKS_PER_CLASS'] )
+    print("CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS: ", bowl_num_healthy_chunks)
+
+if 'CLASS_NON_NODULES' in d['USE_CLASSES']:
+    num_non_nodules =get_nodules_and_augmentations_dict(d['LUNA_NON_NODULES_INPUT_DIRECTORY'], [''], augmentation_sep='',  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_NON_NODULES'], augmentations=True, max_chunks=d['MAX_CHUNKS_PER_CLASS'] )
+    print("CLASS_NON_NODULES nodules: " + str(num_non_nodules))
+
+if 'CLASS_OTHER_TISSUES' in d['USE_CLASSES']:
+    num_other_tissues =get_nodules_and_augmentations_dict(d['LUNA_OTHER_TISSUES_INPUT_DIRECTORY'], [''], augmentation_sep='',  dataset_X=X_tr, dataset_Y=Y_tr, y_value=d['CLASS_OTHER_TISSUES'], augmentations=True, max_chunks=d['MAX_CHUNKS_PER_CLASS'] )
+    print("CLASS_OTHER_TISSUES nodules: " + str(num_non_nodules))
 
 
-label=np.hstack((
-    np.ones((luna_num_affected_chucks,),dtype = int),
-    np.zeros((luna_num_healthy_chucks,),dtype = int)
-))
+
+
+
+#num_affected_without_augmentation = len(luna_affected_nodules)
+#num_healthy_without_augmentation = len(luna_healthy_nodules)
+
+#num_affected = len(luna_affected_nodules)
+#num_healthy = len(luna_healthy_nodules)
+#print("\nnum_affected: " + str(num_affected))
+#print("num_healthy: " + str(num_healthy))
+
+
+
+
+
+label=np.array(Y_tr)
 
 X_tr_array = np.array(X_tr) 
 
@@ -308,28 +348,17 @@ train_data = [X_tr_array,label]
 print('X_Train shape:', X_train.shape)
 
 
-patch_size = img_depth    # img_depth or number of frames used for each video
 
-  
+'''                                                  _             
+                                                  (_)            
+  _ __  _ __ ___ _ __  _ __ ___   ___ ___  ___ ___ _ _ __   __ _ 
+ | '_ \| '__/ _ \ '_ \| '__/ _ \ / __/ _ \/ __/ __| | '_ \ / _` |
+ | |_) | | |  __/ |_) | | | (_) | (_|  __/\__ \__ \ | | | | (_| |
+ | .__/|_|  \___| .__/|_|  \___/ \___\___||___/___/_|_| |_|\__, |
+ | |            | |                                         __/ |
+ |_|            |_|                                        |___/ 
 
-
-batch_size = d['BATCH_SIZE']
-nb_classes = d['NUM_CLASSES']
-nb_epoch =   d['EPOCHS'] 
-
-# convert class vectors to binary class matrices
-Y_train = np_utils.to_categorical(y_train, nb_classes)
-
-# number of convolutional filters to use at each layer
-nb_filters = [32, 32]
-
-# level of pooling to perform at each layer (POOL x POOL)
-nb_pool = [3, 3]
-
-# level of convolution to perform at each layer (CONV x CONV)
-nb_conv = [5,5]
-
-# Pre-processing
+'''
 
 
 def get_normalized_dataset_for_cnn(dataset, substract=None, divide_by=None, img_rows=img_rows, img_cols=img_cols, img_depth=img_depth):
@@ -343,11 +372,11 @@ def get_normalized_dataset_for_cnn(dataset, substract=None, divide_by=None, img_
     
     print(dataset.shape, ' samples') 
     
-#    dataset_mean = np.mean(result_dataset)
-#    dataset_max = np.max(np.abs(result_dataset))
+    dataset_mean = np.mean(result_dataset)
+    dataset_max = np.max(np.abs(result_dataset))
     
-    dataset_mean = np.min(result_dataset)
-    dataset_max = np.max(np.abs(result_dataset))-dataset_mean
+#     = np.min(result_dataset)
+#     = np.max(np.abs(result_dataset))-dataset_min
     
     if substract is None:
         substract=dataset_mean
@@ -379,13 +408,50 @@ report['train_max']=train_max
 
 X_test=[]
 ids_test=[]
-num_test_set_chunks =get_nodules_and_augmentations_dict(d['BOWL_INPUT_DIRECTORY'], [''], augmentation_sep='',  dataset_X=X_test, dataset_ids=ids_test)
+num_test_set_chunks =get_nodules_and_augmentations_dict(d['BOWL_INPUT_DIRECTORY'], [''], augmentation_sep='',  dataset_X=X_test, dataset_ids=ids_test, max_chunks=d['MAX_CHUNKS_TO_PREDICT'])
 X_test_array = np.array(X_test) 
 del(X_test)
 ids_test__pd=pd.DataFrame(ids_test, columns={'nodule_id'})
 test_set, test_mean, test_max = get_normalized_dataset_for_cnn((X_test_array/2).clip(-250,1200), substract=train_mean, divide_by=train_max)
 report['test_mean']=test_mean
 report['test_max']=test_max
+
+
+
+
+'''
+                      _      _   _             _       _             
+                     | |    | | | |           (_)     (_)            
+  _ __ ___   ___   __| | ___| | | |_ _ __ __ _ _ _ __  _ _ __   __ _ 
+ | '_ ` _ \ / _ \ / _` |/ _ \ | | __| '__/ _` | | '_ \| | '_ \ / _` |
+ | | | | | | (_) | (_| |  __/ | | |_| | | (_| | | | | | | | | | (_| |
+ |_| |_| |_|\___/ \__,_|\___|_|  \__|_|  \__,_|_|_| |_|_|_| |_|\__, |
+                                                                __/ |
+                                                               |___/ 
+'''
+
+patch_size = img_depth    # img_depth or number of frames used for each video
+
+  
+
+
+batch_size = d['BATCH_SIZE']
+nb_classes = d['NUM_CLASSES']
+nb_epoch =   d['EPOCHS'] 
+
+# convert class vectors to binary class matrices
+Y_train = np_utils.to_categorical(y_train, nb_classes)
+
+# number of convolutional filters to use at each layer
+nb_filters = [32, 32]
+
+# level of pooling to perform at each layer (POOL x POOL)
+nb_pool = [3, 3]
+
+# level of convolution to perform at each layer (CONV x CONV)
+nb_conv = [5,5]
+
+
 
 
 def cnn_model_old(input_shape, output_shape):
@@ -550,7 +616,7 @@ for train_index, val_index in validation_indexes:
     
 
     # Train the model
-    
+    print("Training...")
     hist = model.fit(X_train_fold,
             y_train_fold,
             validation_data=validation_data,
@@ -559,6 +625,7 @@ for train_index, val_index in validation_indexes:
             shuffle=True
             ,callbacks= callbacks_list
     ) #show_accuracy=True,
+    print("Done")
     
 
     
@@ -615,7 +682,7 @@ for train_index, val_index in validation_indexes:
     print("Test set predictions: in progress")
     test_preds=model.predict(test_set, batch_size=batch_size)
     test_preds__pd=pd.concat([ids_test__pd,
-                            pd.DataFrame(test_preds[:,1].astype(np.float), columns={'prediction'})], 
+                            pd.DataFrame(test_preds.astype(np.float))], 
                             axis=1) 
     
     test_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"test_predictions_"+ model_output_filename[:-len(".hdf5")] 
@@ -727,6 +794,10 @@ report['val_scores']=list(report['val_scores'])
 report['dashboard']=d
 report['history']=hist.history
 
+report['ellapsed_time']=round(time.time() - start_time) #seconds
+
+report['classes']=d['CLASSES_TXT']
+
 try:
     with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) + ".json" , 'w') as f:
         json.dump(report, f, indent=4, sort_keys=True)
@@ -737,7 +808,7 @@ with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) +
 with open(d['EXECUTION_OUTPUT_DIRECTORY'] + "report_" + str(d['DASHBOARD_ID']) + ".yaml" , 'w')  as outfile:
     yaml.dump(report, outfile, default_flow_style=False)        
         
-print("Ellapsed time: {} seconds".format((time.time() - start_time)))
+print("Ellapsed time: {} seconds".format(report['ellapsed_time']))
 
 
 

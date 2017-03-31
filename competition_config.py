@@ -131,18 +131,32 @@ nodules_roi_dashboard={
     'BALL_RADIUS':  2,
 }
 
-####################### 6 - Nodules 3D segmentation (LUNA-version)
+####################### 6 - LIDC ETL
 #
-# Candidate Generation and LUNA16 preprocessing (part 2)
-# https://www.kaggle.com/arnavkj95/data-science-bowl-2017/candidate-generation-and-luna16-preprocessing/notebook
+# https://wiki.cancerimagingarchive.net/display/Public/LIDC-IDRI
+# http://www.via.cornell.edu/lidc/
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2176079/
 
-global nodules_3d_segmentation_luna
+global lidc_etl
 
-nodules_3d_segmentation_luna={
-    #'INPUT_DIRECTORY' : inverted_lung_detector_dashboard['INPUT_DIRECTORY'],
-    'INPUT_DIRECTORY' : nodules_roi_dashboard['OUTPUT_DIRECTORY'],
-    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_nodules_3D_segmentation_LUNA"016/',
+lidc_etl={
+    'DICOM_INPUT_DIRECTORY' : '../lidc/DOI',
+    'XML_INPUT_DIRECTORY' : '../lidc/LIDC-XML-only',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_lidc_etl/',
 }
+
+####################### 6B - reduce CSV
+#
+# reduce: joins all centerradius info from step 7 pickles, into a sligle CSV
+
+
+global nodules_info_csv_from_step_6
+
+nodules_info_csv_from_step_6={
+    'INPUT_DIRECTORY' : lidc_etl['OUTPUT_DIRECTORY'],
+    'OUTPUT_FILE' : COMPETITION_HOME + 'output/step-6-nodules.{}',
+}
+
 
 ####################### 7 - Nodules 3D segmentation
 #
@@ -183,9 +197,11 @@ LUNA_PREFIX = "CAND" # LUNA candidates from non-nodule/healthy areas
 
 if LUNA_PREFIX == "ANN":
     LUNA_ANN_CSV_FILE = "annotations.csv"
+elif LUNA_PREFIX == "ANN_EX":
+    LUNA_ANN_CSV_FILE = "annotations_excluded.csv" # deberia ser UNIQUE!!!
 else:
-    #LUNA_ANN_CSV_FILE = "annotations_excluded.csv"
     LUNA_ANN_CSV_FILE = "candidates_processed.csv"
+
 LUNA_ANN_CSV_FILE_PATH = LUNA_CSV_DIRECTORY + LUNA_ANN_CSV_FILE
 LUNA_ANN = LUNA_ROOT + LUNA_PREFIX + str(CHUNK_SIDE) + "/"
 
@@ -249,6 +265,7 @@ features_extraction_nodules_3d={
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/10_features_extraction_3D_nodules/',
 }
 
+
 ####################### 13 - Features Extraction Lungs
 #
 # 
@@ -270,38 +287,111 @@ features_extraction_lungs_3d={
 global nodule_3D_classifier
 
 nodule_3D_classifier={
-#    'INPUT_LUNA_AFFECTED_NODULES' : '../luna-chunks/ANN64may2cm/',
-#    'INPUT_LUNA_HEALTHY_NODULES' : '../luna-chunks/ANN64men2cm/',
+'i':'''
+      _       _          _____     ______  
+     | |     | |        |_   _|   / / __ \ 
+   __| | __ _| |_ __ _    | |    / / |  | |
+  / _` |/ _` | __/ _` |   | |   / /| |  | |
+ | (_| | (_| | || (_| |  _| |_ / / | |__| |
+  \__,_|\__,_|\__\__,_| |_____/_/   \____/
+  
+''',
 
-    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', #'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',
+    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
     'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
     'LUNA_INPUT_DIRECTORY' : augment_luna['OUTPUT_DIRECTORY'],
+    'LUNA_NON_NODULES_INPUT_DIRECTORY' : '../ANN_EX24/',
+    'LUNA_OTHER_TISSUES_INPUT_DIRECTORY' : '../CAND24/',
     'BOWL_INPUT_DIRECTORY' : chunks_DSB_extraction['OUTPUT_DIRECTORY'],
+    'BOWL_LABELS' : '../stage1_labels.csv',
+    #'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/14_Nodule_3D_classifier/',
     'TEMP_DIRECTORY': '/media/ramdisk1/',
-    'USE_RAMDISK': False,
+    'USE_RAMDISK': True,
     
-    # PREPROCESSING    
+'i':'''                                                  _             
+                                                  (_)            
+  _ __  _ __ ___ _ __  _ __ ___   ___ ___  ___ ___ _ _ __   __ _ 
+ | '_ \| '__/ _ \ '_ \| '__/ _ \ / __/ _ \/ __/ __| | '_ \ / _` |
+ | |_) | | |  __/ |_) | | | (_) | (_|  __/\__ \__ \ | | | | (_| |
+ | .__/|_|  \___| .__/|_|  \___/ \___\___||___/___/_|_| |_|\__, |
+ | |            | |                                         __/ |
+ |_|            |_|                                        |___/ 
+
+''',   
     'RADIUS_THRESHOLD_MM': 10, # heuristic: considers any nodule with radius bigger than RADIUS_THRESHOLD_MM as affected nodule 
     'CHUNK_SIZE': 24,
+    'MAX_CHUNKS_PER_CLASS': 1200,
+    'MAX_CHUNKS_TO_PREDICT': None, #50, # for testing only  ¡¡¡ MUST BE None !!!
+    
+    
+
+
+'i':'''
+                      _      _   _             _       _             
+                     | |    | | | |           (_)     (_)            
+  _ __ ___   ___   __| | ___| | | |_ _ __ __ _ _ _ __  _ _ __   __ _ 
+ | '_ ` _ \ / _ \ / _` |/ _ \ | | __| '__/ _` | | '_ \| | '_ \ / _` |
+ | | | | | | (_) | (_| |  __/ | | |_| | | (_| | | | | | | | | | (_| |
+ |_| |_| |_|\___/ \__,_|\___|_|  \__|_|  \__,_|_|_| |_|_|_| |_|\__, |
+                                                                __/ |
+                                                               |___/ 
+''',
+    
+    
+    'USE_CLASSES': [
+        'CLASS_LOWER_DIAMETER_NODULES',  # [ANN24.ZIP] LUNA chunks with original diameter <2cm (candidates.csv)
+        'CLASS_HIGHER_DIAMETER_NODULES', # [ANN24.ZIP] LUNA chunks with original diameter >2cm (candidates.csv)
+        #'CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS', # [] BOWL chunks from non-cancer lungs (7 - Nodules 3D segmentation)
+        'CLASS_NON_NODULES', # [ANN_EX24.ZIP] from LUNA annotations_excluded.csv
+        'CLASS_OTHER_TISSUES' # [CAND24.ZIP] from LUNA
+    ],
     
     # MODEL_TRAINING
     'NUM_FOLDS': None,# (2,2), #(5,5),  # (2,5) means execute only 2 folds of 5
     #'NUM_CLASSES': autodetected, see bellow
     'BATCH_SIZE':100,
-    'EPOCHS':2,
+    'EPOCHS':20,
     'EARLY_STOPPING_ROUNDS':5,
     
-    'CLASS_OTHER_TISSUES':0,
-    'CLASS_NON_NODULES':0,
-    'CLASS_LOWER_DIAMETER_NODULES':0,
-    'CLASS_HIGHER_DIAMETER_NODULES':1,
     
     #OUTPUT_FILTER
-    'CLASS_1_THRESHOLD':0.90,
+    'CLASS_1_THRESHOLD':0.90,  # confussion matrix threeshold
 }
 
-nodule_3D_classifier['DASHBOARD_ID']="CNN-{}_epochs_{}_early_stopping_{}".format(
+del(nodule_3D_classifier['i']) #comments to be ingnored
+
+i=0
+nodule_3D_classifier['CLASSES_TXT']=""
+for x in nodule_3D_classifier['USE_CLASSES']:
+    nodule_3D_classifier[x]=i
+    nodule_3D_classifier['CLASSES_TXT']+=str(x) + ": " + str(i) + "\n"
+    i+=1
+
+nodule_3D_classifier['CLASSES']=sorted(set([nodule_3D_classifier[x] for x in nodule_3D_classifier['USE_CLASSES']]))
+
+
+if 'NUM_CLASSES' not in nodule_3D_classifier:
+    nodule_3D_classifier['NUM_CLASSES']=len(nodule_3D_classifier['CLASSES'])
+
+
+nodule_3D_classifier['USE_K_FOLD']=nodule_3D_classifier['NUM_FOLDS'] is not None and nodule_3D_classifier['NUM_FOLDS']!=(1,1) and nodule_3D_classifier['NUM_FOLDS']!=(0,0)
+
+
+
+'''
+            _          
+           (_)         
+  _ __ ___  _ ___  ___ 
+ | '_ ` _ \| / __|/ __|
+ | | | | | | \__ \ (__ 
+ |_| |_| |_|_|___/\___|
+                       
+                     
+'''
+
+nodule_3D_classifier['DASHBOARD_ID']="CNN-{}_classes_{}_epochs_{}_early_stopping_{}".format(
+    nodule_3D_classifier['NUM_CLASSES'],
     nodule_3D_classifier['EPOCHS'],
     nodule_3D_classifier['EARLY_STOPPING_ROUNDS'],
     str(datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S"))
@@ -311,18 +401,6 @@ nodule_3D_classifier['EXECUTION_OUTPUT_DIRECTORY']=nodule_3D_classifier['OUTPUT_
 if not 'TEMP_DIRECTORY' in nodule_3D_classifier:
     nodule_3D_classifier['TEMP_DIRECTORY']=nodule_3D_classifier['EXECUTION_OUTPUT_DIRECTORY']
 
-nodule_3D_classifier['USE_K_FOLD']=nodule_3D_classifier['NUM_FOLDS'] is not None and nodule_3D_classifier['NUM_FOLDS']!=(1,1) and nodule_3D_classifier['NUM_FOLDS']!=(0,0)
-
-nodule_3D_classifier['CLASSES']=sorted(set([
-    nodule_3D_classifier['CLASS_OTHER_TISSUES'],
-    nodule_3D_classifier['CLASS_NON_NODULES'],
-    nodule_3D_classifier['CLASS_LOWER_DIAMETER_NODULES'],
-    nodule_3D_classifier['CLASS_HIGHER_DIAMETER_NODULES']
-]))
-
-
-if 'NUM_CLASSES' not in nodule_3D_classifier:
-    nodule_3D_classifier['NUM_CLASSES']=len(nodule_3D_classifier['CLASSES'])
 
 ####################### 15 - Nodule 3D classifier
 #
@@ -332,17 +410,22 @@ if 'NUM_CLASSES' not in nodule_3D_classifier:
 global nodule_based_lung_classifier
 
 nodule_based_lung_classifier={
-#    'CNN':'CNN-5_epochs_5_early_stopping_2017-03-24_07.08.35',    
-#    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_07.58.22', 
-    'CNN':'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
+    'CNN':'CNN-3_classes_15_epochs_5_early_stopping_2017-03-25_19.31.23',
     'INPUT_DIRECTORY' : nodule_3D_classifier['OUTPUT_DIRECTORY'],
     'BOWL_LABELS' : '../stage1_labels.csv',
     'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/15_nodule_based_lung_classifier/',
-    'PREDICTION_BASE':0.2878788
+    'SCORE_BASE':0.2878788,
+    'SCORE_AFFECTED':0.3878788,
+    'SCORE_HEALTHY':0.1878788,
+    'AFFECTED_THRESHOLD': 0.935,
+    'HEALTHY_THRESHOLD': 0.07,
+    
     
     
 }
+
+nodule_based_lung_classifier['EXECUTION_OUTPUT_DIRECTORY']=nodule_based_lung_classifier['OUTPUT_DIRECTORY']+nodule_based_lung_classifier['CNN']+"/"
 
 
 
