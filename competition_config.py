@@ -140,8 +140,8 @@ nodules_roi_dashboard={
 global lidc_etl
 
 lidc_etl={
-    'DICOM_INPUT_DIRECTORY' : '../lidc/DOI',
-    'XML_INPUT_DIRECTORY' : '../lidc/LIDC-XML-only',
+    'DICOM_INPUT_DIRECTORY' : '../lidc/DOI/',
+    'XML_INPUT_DIRECTORY' : '../lidc/LIDC-XML-only/',
     'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/6_lidc_etl/',
 }
 
@@ -428,6 +428,36 @@ nodule_based_lung_classifier={
 nodule_based_lung_classifier['EXECUTION_OUTPUT_DIRECTORY']=nodule_based_lung_classifier['OUTPUT_DIRECTORY']+nodule_based_lung_classifier['CNN']+"/"
 
 
+####################### ALT-1: RESNET + XGBOOST
+#
+# 
+# 
+
+
+'''
+Download from http://data.dmlc.ml/mxnet/models/imagenet-11k-place365-ch/
+	
+    resnet-50-0000.params
+    
+    resnet-50-symbol.json
+
+and move to ../resnet-50
+'''
+
+global alternative_model_1a
+
+alternative_model_1a={
+    'PRETRAINED_RESNET_50':'alt_1_xgboost_resnet_features.pickle',
+    'BOWL_LABELS' : '../stage1_labels.csv',
+}
+
+
+global alternative_model_1b
+
+alternative_model_1b={
+    'RESNET_LAYER_FEATURES':'alt_1_xgboost_resnet_features.pickle',
+    'BOWL_LABELS' : '../stage1_labels.csv',
+}
 
 ####################### Extras and Cloud
 #
