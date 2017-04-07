@@ -13,7 +13,7 @@ and move to ../resnet-50
 
 import sys
 sys.path.append("../")
-from alternative_model_1a import *
+from competition_config import *
 d=alternative_model_1a
 
 
@@ -28,11 +28,33 @@ import pandas as pd
 from sklearn import cross_validation
 import xgboost as xgb
 
+import pickle
+
+try:
+    from tqdm import tqdm
+except:
+    print('"pip install tqdm" to get the progress bar working!')
+    tqdm = lambda x: x
+
+
+if not os.path.exists(d['OUTPUT_DIRECTORY']):
+    os.makedirs(d['OUTPUT_DIRECTORY'])
+
+with open('alt_1_xgboost_resnet_features.pickle', 'rb') as handle:
+    z=pickle.load(handle)
+
+
+if d['USE_GPU']:
+    DEVICE_TYPE='gpu'
+else:
+    DEVICE_TYPE='cpu'
+
+
 
 def get_extractor():
-    model = mx.model.FeedForward.load(d['PRETRAINED_RESNET_50'], 0, ctx=mx.cpu(), numpy_batch_size=1)
+    model = mx.model.FeedForward.load(d['PRETRAINED_RESNET_50'], 0, ctx=mx.Context(DEVICE_TYPE), numpy_batch_size=1)
     fea_symbol = model.symbol.get_internals()["flatten0_output"]
-    feature_extractor = mx.model.FeedForward(ctx=mx.cpu(), symbol=fea_symbol, numpy_batch_size=64,
+    feature_extractor = mx.model.FeedForward(ctx=mx.Context(DEVICE_TYPE), symbol=fea_symbol, numpy_batch_size=64,
                                              arg_params=model.arg_params, aux_params=model.aux_params,
                                              allow_extra_params=True)
 
@@ -79,50 +101,28 @@ def get_data_id(path):
 
 def calc_features():
     net = get_extractor()
-    for folder in glob.glob('stage1/*'):
-        batch = get_data_id(folder)
-        feats = net.predict(batch)
-        print(feats.shape)
-        np.save(folder, feats)
-
-
-def train_xgboost():
-    df = pd.read_csv('data/stage1_labels.csv')
-    print(df.head())
-
-    x = np.array([np.mean(np.load('stage1/%s.npy' % str(id)), axis=0) for id in df['id'].tolist()])
-    y = df['cancer'].as_matrix()
-
-    trn_x, val_x, trn_y, val_y = cross_validation.train_test_split(x, y, random_state=42, stratify=y,
-                                                                   test_size=0.20)
-
-    clf = xgb.XGBRegressor(max_depth=10,
-                           n_estimators=1500,
-                           min_child_weight=9,
-                           learning_rate=0.05,
-                           nthread=8,
-                           subsample=0.80,
-                           colsample_bytree=0.80,
-                           seed=4242)
-
-    clf.fit(trn_x, trn_y, eval_set=[(val_x, val_y)], verbose=True, eval_metric='logloss', early_stopping_rounds=50)
-    return clf
-
-
-def make_submit():
-    clf = train_xgboost()
-
-    df = pd.read_csv('data/stage1_sample_submission.csv')
-
-    x = np.array([np.mean(np.load('stage1/%s.npy' % str(id)), axis=0) for id in df['id'].tolist()])
-
-    pred = clf.predict(x)
-
-    df['cancer'] = pred
-    df.to_csv('subm1.csv', index=False)
-    print(df.head())
+    for folder in tqdm(glob.glob(d['BOWL_CT_SCANS']+'*')):
+        ct_scan_id=folder.split("/")[-1]
+        output_filename=d['OUTPUT_DIRECTORY']+ct_scan_id+".pickle"
+        if os.path.isfile(output_filename):
+            print(str(folder) + ' already processed. Skipped')
+            continue
+        try:
+            
+#            print(ct_scan_id)
+            batch = get_data_id(folder)
+            feats = net.predict(batch)
+#            print(feats.shape)
+            
+            with open(output_filename, 'wb') as handle:
+                pickle.dump(feats, handle, protocol=PICKLE_PROTOCOL)
+            if AWS:
+                upload_to_s3(output_filename)
+        except KeyboardInterrupt:
+            print ("KeyboardInterrupt.  Deleting " + outfile)
+            os.remove(outfile)
+            print ("deleted")
 
 
 if __name__ == '__main__':
     calc_features()
-    make_submit()

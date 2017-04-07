@@ -465,7 +465,7 @@ def cnn_model_old(input_shape, output_shape):
     flat = Flatten()(l1_maxpool1)
     dense1 = Dense(512, init='glorot_uniform', activation='relu')(flat)
     dense2 = Dense(64, init='glorot_uniform', activation='relu', name="features_layer")(dense1)
-    out = Dense(output_shape, activation='softmax')(dense2)
+    out = Dense(output_shape, activation='softmax', name="output_layer")(dense2)
     
     model = Model(input=inp, output=out)
     model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
@@ -515,11 +515,11 @@ def cnn_model(input_shape, output_shape):
 #    model.add(Dense(512, init='glorot_uniform'))
 #    model.add(PReLU())
     model.add(Flatten())
-    model.add(Dense(512, init='glorot_uniform'))
+    model.add(Dense(512, init='glorot_uniform', name="features_layer_1"))
     model.add(PReLU())
-    model.add(Dense(64, init='glorot_uniform', name="features_layer"))
+    model.add(Dense(64, init='glorot_uniform', name="features_layer_2"))
     model.add(PReLU())
-    model.add(Dense(output_shape, activation='softmax'))
+    model.add(Dense(output_shape, activation='softmax', name="output_layer"))
     
     #model = Model(input=inp, output=out)
     model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
@@ -680,6 +680,7 @@ for train_index, val_index in validation_indexes:
     
     
     print("Test set predictions: in progress")
+    predict_start_time=time.time()
     test_preds=model.predict(test_set, batch_size=batch_size)
     test_preds__pd=pd.concat([ids_test__pd,
                             pd.DataFrame(test_preds.astype(np.float))], 
@@ -689,21 +690,50 @@ for train_index, val_index in validation_indexes:
     with open(test_output_base_filename + ".pickle", 'wb') as handle:
         pickle.dump(test_preds__pd, handle, protocol=PICKLE_PROTOCOL)
     test_preds__pd.to_csv(test_output_base_filename + ".csv", sep=",", header=True, index=False)
-    print("Test set predictions: done")
+    print("Test set predictions: done in ", round(time.time() - predict_start_time), " seconds")
     
-    print("Last layer output: in progress")
-    layer_name = 'my_layer'
-    intermediate_layer_model = Model(input=model.input, output=model.get_layer("features_layer").output)
+    print("sencond last layer output: in progress")
+    predict_start_time=time.time()
+    intermediate_layer_model = Model(input=model.input, output=model.get_layer("features_layer_1").output)
     intermediate_output = intermediate_layer_model.predict(test_set, batch_size=batch_size)
     intermediate_output__pd=pd.concat([ids_test__pd,
                             pd.DataFrame(intermediate_output)], 
                             axis=1) 
     
-    intermediate_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"intermediate_output_"+ model_output_filename[:-len(".hdf5")] 
+    intermediate_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"intermediate_output_1_"+ model_output_filename[:-len(".hdf5")] 
     with open(intermediate_output_base_filename + ".pickle", 'wb') as handle:
         pickle.dump(intermediate_output__pd, handle, protocol=PICKLE_PROTOCOL)
     intermediate_output__pd.to_csv(intermediate_output_base_filename + ".csv", sep=",", header=True, index=False)
-    print("Last layer output: done")
+    print("second last layer predictions: done in ", round(time.time() - predict_start_time), " seconds")
+    
+    print("Last layer output: in progress")
+    predict_start_time=time.time()
+    intermediate_layer_model = Model(input=model.input, output=model.get_layer("features_layer_2").output)
+    intermediate_output = intermediate_layer_model.predict(test_set, batch_size=batch_size)
+    intermediate_output__pd=pd.concat([ids_test__pd,
+                            pd.DataFrame(intermediate_output)], 
+                            axis=1) 
+    
+    intermediate_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"intermediate_output_2_"+ model_output_filename[:-len(".hdf5")] 
+    with open(intermediate_output_base_filename + ".pickle", 'wb') as handle:
+        pickle.dump(intermediate_output__pd, handle, protocol=PICKLE_PROTOCOL)
+    intermediate_output__pd.to_csv(intermediate_output_base_filename + ".csv", sep=",", header=True, index=False)
+    print("Last layer predictions: done in ", round(time.time() - predict_start_time), " seconds")
+    
+#    print("Alternative predict: in progress")
+#    predict_start_time=time.time()
+#    output_layer_model = Model(input=model.get_layer("output_layer").input, output=model.output)
+#    alternative_output = output_layer_model.predict(intermediate_output, batch_size=batch_size)
+#    alternative_output__pd=pd.concat([ids_test__pd,
+#                            pd.DataFrame(alternative_output)], 
+#                            axis=1) 
+#
+#    alternative_output_base_filename= d['EXECUTION_OUTPUT_DIRECTORY']+"intermediate_output_"+ model_output_filename[:-len(".hdf5")] 
+#    with open(intermediate_output_base_filename + ".pickle", 'wb') as handle:
+#        pickle.dump(intermediate_output__pd, handle, protocol=PICKLE_PROTOCOL)
+#    intermediate_output__pd.to_csv(intermediate_output_base_filename + ".csv", sep=",", header=True, index=False)
+#    print("Alternative predictions: done in ", round(time.time() - predict_start_time), " seconds")
+
 
     '''
     # Plot the results

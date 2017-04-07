@@ -297,7 +297,6 @@ nodule_3D_classifier={
   
 ''',
 
-    #'RESUME_TRAINING': 'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
     'INPUT_LUNA_NODULES_METADATA' : '../luna/annotations.csv',
     'LUNA_INPUT_DIRECTORY' : augment_luna['OUTPUT_DIRECTORY'],
     'LUNA_NON_NODULES_INPUT_DIRECTORY' : '../ANN_EX24/',
@@ -309,7 +308,7 @@ nodule_3D_classifier={
     'TEMP_DIRECTORY': '/media/ramdisk1/',
     'USE_RAMDISK': True,
     
-'i':'''                                                  _             
+'i':'''                                            _             
                                                   (_)            
   _ __  _ __ ___ _ __  _ __ ___   ___ ___  ___ ___ _ _ __   __ _ 
  | '_ \| '__/ _ \ '_ \| '__/ _ \ / __/ _ \/ __/ __| | '_ \ / _` |
@@ -338,11 +337,11 @@ nodule_3D_classifier={
                                                                |___/ 
 ''',
     
-    
+    #'RESUME_TRAINING': None, #'CNN-5_classes_50_epochs_5_early_stopping_2017-03-27_07.09.12', #'CNN-20_epochs_5_early_stopping_2017-03-24_17.48.58',
     'USE_CLASSES': [
         'CLASS_LOWER_DIAMETER_NODULES',  # [ANN24.ZIP] LUNA chunks with original diameter <2cm (candidates.csv)
         'CLASS_HIGHER_DIAMETER_NODULES', # [ANN24.ZIP] LUNA chunks with original diameter >2cm (candidates.csv)
-        #'CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS', # [] BOWL chunks from non-cancer lungs (7 - Nodules 3D segmentation)
+        'CLASS_SEGMENTED_FROM_NON_AFFECTED_LUNGS', # [] BOWL chunks from non-cancer lungs (7 - Nodules 3D segmentation)
         'CLASS_NON_NODULES', # [ANN_EX24.ZIP] from LUNA annotations_excluded.csv
         'CLASS_OTHER_TISSUES' # [CAND24.ZIP] from LUNA
     ],
@@ -351,7 +350,7 @@ nodule_3D_classifier={
     'NUM_FOLDS': None,# (2,2), #(5,5),  # (2,5) means execute only 2 folds of 5
     #'NUM_CLASSES': autodetected, see bellow
     'BATCH_SIZE':100,
-    'EPOCHS':20,
+    'EPOCHS':55,
     'EARLY_STOPPING_ROUNDS':5,
     
     
@@ -444,20 +443,47 @@ Download from http://data.dmlc.ml/mxnet/models/imagenet-11k-place365-ch/
 and move to ../resnet-50
 '''
 
-global alternative_model_1a
+global alternative_model_1a, alternative_model_1b, alternative_model_1c
+
+
 
 alternative_model_1a={
-    'PRETRAINED_RESNET_50':'alt_1_xgboost_resnet_features.pickle',
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/alt_1_A_resnet_features/',
+    'PRETRAINED_RESNET_50':'../resnet-50/resnet-50',
     'BOWL_LABELS' : '../stage1_labels.csv',
+    'BOWL_CT_SCANS': COMPETITION_DATASET_DIRECTORY,
+    #'BOWL_CT_SCANS_NPY':alternative_model_Z['OUTPUT_DIRECTORY'],
+    'USE_GPU': True,
 }
-
-
-global alternative_model_1b
 
 alternative_model_1b={
-    'RESNET_LAYER_FEATURES':'alt_1_xgboost_resnet_features.pickle',
-    'BOWL_LABELS' : '../stage1_labels.csv',
+    'INPUT_DIRECTORY':alternative_model_1a['OUTPUT_DIRECTORY'], # resnet features
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/alt_1_B_decomposition/',
+    'RANDOM_SEED': RANDOM_SEED,
+    'RELU_AFTER_RESNET':False,
+    'RELU_AFTER_PCA':False,
+    'AVERAGE_RESNET_FEATURES':False, 
+    'SLICES_PERCENTAGES':(None, None),
+    'ABSOLUTE_VALUES':False,
+    'WHITEN':False,
+    'SVD_SOLVER':'auto',
 }
+alternative_model_1b['AVERAGE_PCA_FEATURES']=not alternative_model_1b['AVERAGE_RESNET_FEATURES']
+
+alternative_model_1c={
+    'INPUT_DIRECTORY':alternative_model_1b['OUTPUT_DIRECTORY'], # resnet features
+    'BOWL_LABELS' : '../stage1_labels.csv',
+    'BOWL_PATIENTS': COMPETITION_DATASET_DIRECTORY,
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/alt_1_C_xgboost/',
+    'RANDOM_SEED': RANDOM_SEED,
+}
+
+'''
+alternative_model_Z={
+    'BOWL_CT_SCANS': COMPETITION_DATASET_DIRECTORY,
+    'OUTPUT_DIRECTORY' : COMPETITION_HOME + 'output/alt_Z_dicom_to_npy/',
+}
+'''
 
 ####################### Extras and Cloud
 #
@@ -590,3 +616,8 @@ def read_from_s3(path, input_is_folder=False):
             # List will contain paths like ['example/patient.pickle', ...],
             # we only want patients.pickle, not images or other files
     return final_list
+
+
+#import pickle
+#with open('src/alt_1_xgboost_resnet_features.pickle', 'rb') as handle:
+#    z = pickle.load(handle)

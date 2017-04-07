@@ -19,11 +19,11 @@ import time
 start_time = time.time()
 
 import sys
-sys.path.append("../../")
+sys.path.append("../")
 from competition_config import *
 
 
-if True:#"step_to_be_reduced" in globals() and step_to_be_reduced==6:
+if False:#"step_to_be_reduced" in globals() and step_to_be_reduced==6:
     print("REDUCE STEP: 6")
     d=nodules_info_csv_from_step_6
 else:
@@ -46,7 +46,7 @@ start_time = time.time()
 #if not os.path.exists(d['OUTPUT_DIRECTORY']):
 #    os.makedirs(d['OUTPUT_DIRECTORY'])
 print(d['INPUT_DIRECTORY']+"info_*.pickle")
-file_list=glob(d['INPUT_DIRECTORY']+"info_*.pickle")
+file_list=sorted(glob(""+d['INPUT_DIRECTORY']+"info_*.pickle"))
 
 
 nodules_info=[]
@@ -60,6 +60,17 @@ for input_filename in tqdm(file_list):
 
 nodules_info__pd = pd.DataFrame(nodules_info)
 
+'''
+nodules_info__pd['radius']=nodules_info__pd.apply(lambda x: ( (x['max_x']-x['min_x'])**2 + (x['max_y']-x['min_y'])**2 + (x['max_z']-x['min_z'])**2)**0.5, axis=1)
+
+nodules_info__pd['center']=nodules_info__pd.apply(lambda x: [
+    int(x['min_x']+(x['max_x']-x['min_x'])/2),
+    int(x['min_y']+(x['max_y']-x['min_y'])/2),
+    int(x['min_z']+(x['max_z']-x['min_z'])/2)
+], axis=1)
+
+nodules_info__pd['center']=nodules_info__pd['center'].apply(np.array)
+'''
 nodules_info__pd.rename(columns={
     'center':'mass_center',
     'radius':'mass_radius'

@@ -61,7 +61,7 @@ if True: #not "test_set_patients" in globals() or test_set_patients is None:
     cnn_predictions_filename=d['INPUT_DIRECTORY'] +  d['CNN']  + '/test_predictions_' + d['CNN'] + '_fold_1.csv'
     cnn_predictions=pd.read_csv(cnn_predictions_filename)
 
-#cnn_predictions['1'].hist(bins=100)
+cnn_predictions['1'].hist(bins=100)
 
 cnn_predictions['ct_scan_id']=cnn_predictions['nodule_id'].apply(lambda x: x.split("_")[0])
 cnn_predictions['nod_num']=cnn_predictions['nodule_id'].apply(lambda x: x.split("_")[1])
@@ -73,7 +73,7 @@ predictions_per_nodule=cnn_predictions.groupby(cnn_predictions['ct_scan_id']).ag
 
 
 
-#predictions_per_nodule.hist(bins=100)
+predictions_per_nodule.hist(bins=100)
 predictions_per_nodule.reset_index(inplace=True)
 predictions_per_nodule.rename(columns={'1':Y_COL_NAME, 'ct_scan_id':'id'}, inplace=True)
 affected_lungs=predictions_per_nodule[predictions_per_nodule[Y_COL_NAME]>=d['AFFECTED_THRESHOLD']]
