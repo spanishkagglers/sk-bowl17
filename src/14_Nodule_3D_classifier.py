@@ -9,7 +9,7 @@ import os
 #os.environ["KERAS_BACKEND"] = "theano"
 #os.environ["THEANO"]="device=gpu,floatX=float32,dnn.conv.algo_bwd_filter=deterministic,dnn.conv.algo_bwd_data=deterministic;"
 import keras.backend as K
-K.set_image_dim_ordering('th') #?????????????????????????????????????
+K.set_image_dim_ordering('th') 
 
 import numpy as np # linear algebra
 import os
