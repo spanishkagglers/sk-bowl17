@@ -158,67 +158,6 @@ img_rows=img_cols=img_depth=chunck_size=d['CHUNK_SIZE'] # ¿X, Y,?, Z
 
 
 
-def get_model(channels, img_rows, img_cols, img_depth, summary=False, backend=None):
-    """ Return the Keras model of the network
-    
-    """
-    
-    if backend is None:
-        backend = K.image_dim_ordering()
-    
-    model = Sequential()
-    if backend == 'tf':
-        input_shape=(img_rows, img_cols, img_depth, channels) # ???(16, 112, 112, 3) # l, h, w, c
-    else:
-        input_shape=(channels, img_rows, img_cols, img_depth) # ??? 3, 16, 112, 112) # c, l, h, w
-    model.add(Convolution3D(64, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv1',
-                            input_shape=input_shape))
-    model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2),
-                           border_mode='valid', name='pool1'))
-    # 2nd layer group
-    model.add(Convolution3D(128, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv2'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
-                           border_mode='valid', name='pool2'))
-    # 3rd layer group
-    model.add(Convolution3D(256, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv3a'))
-    model.add(Convolution3D(256, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv3b'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
-                           border_mode='valid', name='pool3'))
-    # 4th layer group
-    model.add(Convolution3D(512, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv4a'))
-    model.add(Convolution3D(512, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv4b'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
-                           border_mode='valid', name='pool4'))
-    # 5th layer group
-    model.add(Convolution3D(512, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv5a'))
-    model.add(Convolution3D(512, 3, 3, 3, activation='relu',
-                            border_mode='same', name='conv5b'))
-    model.add(ZeroPadding3D(padding=(0, 1, 1), name='zeropad5'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
-                           border_mode='valid', name='pool5'))
-    model.add(Flatten())
-    # FC layers group
-    model.add(Dense(4096, activation='relu', name='fc6'))
-    model.add(Dropout(.5))
-    model.add(Dense(4096, activation='relu', name='fc7'))
-    model.add(Dropout(.5))
-    model.add(Dense(487, activation='softmax', name='fc8'))
-
-    if summary:
-        print(model.summary())
-        
-    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-
-    return model
-
-
 def read_luna_annotations_csv(filename):
     annotations__pd = pd.read_csv(filename, sep=",")
     annotations__pd['nodule_id']=["ann"+str(x) for x in annotations__pd.index.values]
@@ -454,22 +393,6 @@ nb_conv = [5,5]
 
 
 
-def cnn_model_old(input_shape, output_shape):
-    inp = Input(shape=(input_shape[0], input_shape[1], input_shape[2], input_shape[3]))
-    #Layer 1
-    l1_conv1 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(inp)
-    l1_conv2 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l1_conv1)
-    l1_maxpool1 = MaxPooling3D(pool_size=(3, 3, 3), strides=(2, 2, 2))(l1_conv2)
-    
-    # Flatten
-    flat = Flatten()(l1_maxpool1)
-    dense1 = Dense(512, init='glorot_uniform', activation='relu')(flat)
-    dense2 = Dense(64, init='glorot_uniform', activation='relu', name="features_layer")(dense1)
-    out = Dense(output_shape, activation='softmax', name="output_layer")(dense2)
-    
-    model = Model(input=inp, output=out)
-    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-    return model
 
 def cnn_model(input_shape, output_shape):
     model = Sequential()
@@ -958,72 +881,3 @@ class InMemoryBestModelCheckpoint(Callback):
 
 
 
-'''
-# Define model
-model = Sequential()
-model.add(Convolution3D(nb_filters[0],
-                        nb_depth=nb_conv[0], 
-                        nb_row=nb_conv[0], 
-                        nb_col=nb_conv[0], 
-                        input_shape=(1, img_rows, img_cols, patch_size), 
-                        activation='relu'))
-
-model.add(MaxPooling3D(pool_size=(nb_pool[0], nb_pool[0], nb_pool[0])))
-
-model.add(Dropout(0.5))
-
-model.add(Flatten())
-
-model.add(Dense(128, init='normal', activation='relu'))
-
-model.add(Dropout(0.5))
-
-model.add(Dense(nb_classes,init='normal'))
-
-model.add(Activation('softmax'))
-
-model.compile(loss='categorical_crossentropy', optimizer='RMSprop')
-'''
-'''
-def cnn_model(input_shape, output_shape):
-    inp = Input(shape=(input_shape[0], input_shape[1], input_shape[2], input_shape[3]))
-    #Layer 1
-    l1_conv1 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(inp)
-    l1_conv2 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l1_conv1)
-    l1_maxpool1 = MaxPooling3D(pool_size=(3, 3, 3), strides=(2, 2, 2))(l1_conv2)
-    
-    #Layer 2
-    l2_conv1 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l1_maxpool1)
-    l2_conv2 = Convolution3D(32, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l2_conv1)
-    l2_maxpool1 = MaxPooling3D(pool_size=(2, 2, 2))(l2_conv2)
-    
-    #Layer 3
-    l3_conv1 = Convolution3D(64, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l2_maxpool1)
-    l3_conv2 = Convolution3D(64, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l3_conv1)
-    l3_maxpool1 = MaxPooling3D(pool_size=(2, 2, 2))(l3_conv2)
-    
-    #Layer 4
-    l4_conv1 = Convolution3D(128, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l3_maxpool1)
-    l4_conv2 = Convolution3D(128, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l4_conv1)
-    l4_maxpool1 = MaxPooling3D(pool_size=(2, 2, 2))(l4_conv2)
-    
-    #Layer 5
-    l5_conv1 = Convolution3D(128, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l4_maxpool1)
-    l5_conv2 = Convolution3D(128, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l5_conv1)
-    l5_maxpool1 = MaxPooling3D(pool_size=(2, 2, 2))(l5_conv2)
-    
-    #Layer 6
-    l6_conv1 = Convolution3D(256, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l5_maxpool1)
-    l6_conv2 = Convolution3D(256, 3, 3, 3, border_mode = 'same',activation='relu', init='glorot_uniform')(l6_conv1)
-    l6_maxpool1 = MaxPooling3D(pool_size=(2, 2, 2))(l6_conv2)
-    
-    # Flatten
-    flat = Flatten()(l6_maxpool1)
-    dense1 = Dense(512, init='glorot_uniform', activation='relu')(flat)
-    dense2 = Dense(64, init='glorot_uniform', activation='relu')(dense1)
-    out = Dense(output_shape, activation='softmax')(dense2)
-    
-    model = Model(input=inp, output=out)
-    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-    return model
-'''
