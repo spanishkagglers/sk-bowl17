@@ -369,7 +369,7 @@ report['test_max']=test_max
                                                                |___/ 
 '''
 
-patch_size = img_depth    # img_depth or number of frames used for each video
+patch_size = img_depth   
 
   
 
